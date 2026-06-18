@@ -1,5 +1,4 @@
 export const defaultRoadshow = {
-  badge: "SUMMER 2026 TOUR DE FORCE",
   title: "HR Connect India 2026: The Mega Pan-India Roadshow",
   description:
     "Join our most ambitious initiative yet. A synchronized series of networking summits across India's premier industrial hubs, reaching over 1,500+ HR Leaders in a single month. Securing VIP seats aligns you with regional pioneers.",

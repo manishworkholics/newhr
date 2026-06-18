@@ -20,7 +20,7 @@ export default function Header({ onOpenRegister, onOpenDashboard }) {
           className="font-display text-xl md:text-2xl font-bold text-[#e9c349] cursor-pointer hover:opacity-90 select-none transition-opacity"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
         >
-          TalentMax Meet-Up
+          EventMax
         </div>
 
         {/* Desktop Nav */}
@@ -48,12 +48,6 @@ export default function Header({ onOpenRegister, onOpenDashboard }) {
             className="font-sans text-sm font-medium text-[#e2e2e2] hover:text-[#e9c349] transition-colors cursor-pointer"
           >
             Sponsors
-          </button>
-          <button 
-            onClick={onOpenDashboard}
-            className="font-sans text-sm font-medium text-[#adc7ff] hover:text-[#e9c349] transition-colors cursor-pointer"
-          >
-            Organizer Panel
           </button>
         </div>
 
@@ -111,12 +105,6 @@ export default function Header({ onOpenRegister, onOpenDashboard }) {
             className="text-left font-sans text-sm font-medium text-[#e2e2e2] hover:text-[#e9c349]"
           >
             Sponsors
-          </button>
-          <button 
-            onClick={() => { onOpenDashboard(); setMobileMenuOpen(false); }}
-            className="text-left font-sans text-sm font-medium text-[#adc7ff] hover:text-[#e9c349]"
-          >
-            Organizer Panel
           </button>
           <button 
             onClick={() => { onOpenRegister(); setMobileMenuOpen(false); }}

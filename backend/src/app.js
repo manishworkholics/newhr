@@ -11,14 +11,26 @@ export const app = express();
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || env.clientUrls.includes(origin)) {
+    if (!origin) {
+      callback(null, true);
+      return;
+    }
+
+    if (env.clientUrls.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    if (env.localOriginRegex.some((regex) => regex.test(origin))) {
       callback(null, true);
       return;
     }
 
     callback(new Error(`CORS blocked for origin: ${origin}`));
   },
-  credentials: true
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.use(express.json({ limit: "1mb" }));
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));

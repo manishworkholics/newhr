@@ -43,8 +43,8 @@ export default function HomePage({ initialSection }) {
   const [preselectedCity, setPreselectedCity] = useState("");
   const [cms, setCms] = useState({
     roadshow: {
-      badge: "SUMMER 2026 TOUR DE FORCE",
-      title: "HR Connect India 2026: The Mega Pan-India Roadshow",
+      badge: "Year Around Summit",
+      title: "HR Connect India 2026: The Mega Pan-India Summit",
       description:
         "Join our most ambitious initiative yet. A synchronized series of networking summits across India's premier industrial hubs, reaching over 1,500+ HR Leaders in a single month. Securing VIP seats aligns you with regional pioneers.",
       ctaLabel: "Reserve Your City Slot Now",
@@ -342,9 +342,73 @@ export default function HomePage({ initialSection }) {
         <section className="py-24 px-6 md:px-16 max-w-7xl mx-auto" id="events">
           <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
             <div>
-              <span className="text-xs font-bold text-[#e9c349] uppercase tracking-widest block mb-2">Bespoke Summits</span>
+             
               <h2 className="font-display text-3xl md:text-4xl font-bold text-white tracking-tight">
-                Our Flagship Properties
+                Our Flagship Offerings
+              </h2>
+              <p className="text-[#c5c6cd] text-xs leading-relaxed mt-1">
+                Signature event formats tailored for specific industry niches. Click as desired for details.
+              </p>
+            </div>
+            
+            <button 
+              onClick={handleOpenRegister}
+              className="text-[#e9c349] font-semibold text-xs border border-[#e9c349]/30 hover:bg-[#e9c349]/10 px-4 py-2 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer"
+            >
+              <span>Explore All Formats</span>
+              <ArrowRight size={12} />
+            </button>
+          </div>
+
+          {/* Properties Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            {cms.properties.map((prop) => (
+              <div 
+                key={prop.id}
+                onClick={() => setSelectedProperty(prop)}
+                className="bg-[#112240]/40 border border-white/10 hover:border-[#e9c349]/50 rounded-xl overflow-hidden flex flex-col cursor-pointer hover:-translate-y-1.5 transition-all group shadow-lg"
+              >
+                <div className="h-44 relative overflow-hidden bg-black">
+                  <img 
+                    src={prop.image || "https://images.unsplash.com/photo-1515169067865-5387ec356754?auto=format&fit=crop&w=800&q=80"} 
+                    alt={prop.title} 
+                    className="w-full h-full object-cover opacity-85 transition-transform duration-500 group-hover:scale-110"
+                  />
+                  
+                  {prop.badge && (
+                    <span className="absolute top-4 left-4 bg-[#e9c349] text-[#0d1c32] font-semibold text-[9px] px-2.5 py-1 rounded tracking-wider font-mono">
+                      {prop.badge}
+                    </span>
+                  )}
+                </div>
+
+                <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
+                  <div className="space-y-1.5">
+                    <h3 className="font-display font-bold text-[#e2e2e2] group-hover:text-[#e9c349] transition-colors text-md">
+                      {prop.title}
+                    </h3>
+                    <p className="text-[#c5c6cd] text-xs leading-relaxed">
+                      {prop.subtitle}
+                    </p>
+                  </div>
+                  
+                  <div className="text-[10px] font-bold text-[#adc7ff] uppercase tracking-wider flex items-center gap-1 group-hover:translate-x-1.5 transition-transform pt-2 shrink-0">
+                    <span>Inspect format</span>
+                    <ArrowRight size={10} />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+
+         <section className="py-24 px-6 md:px-16 max-w-7xl mx-auto" id="events">
+          <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-4">
+            <div>
+              
+              <h2 className="font-display text-3xl md:text-4xl font-bold text-white tracking-tight">
+                Upcoming Events
               </h2>
               <p className="text-[#c5c6cd] text-xs leading-relaxed mt-1">
                 Signature event formats tailored for specific industry niches. Click as desired for details.
