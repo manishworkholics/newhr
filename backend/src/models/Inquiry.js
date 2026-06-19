@@ -23,6 +23,11 @@ const inquirySchema = new mongoose.Schema(
       trim: true,
       lowercase: true
     },
+    mobileNumber: {
+      type: String,
+      required: true,
+      trim: true
+    },
     interestArea: {
       type: String,
       default: "Sponsorship Opportunity",

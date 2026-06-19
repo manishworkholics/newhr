@@ -9,11 +9,13 @@ export default function AIPitchGenerator({ isOpen, onClose, preselectedProperty,
     name: "",
     company: "",
     designation: "",
+    email: "",
+    mobileNumber: "",
     city: preselectedCity || CITIES[0],
     property: preselectedProperty || PROPERTIES[0].title,
     goal: ""
   });
-  
+
   const [loadingText, setLoadingText] = useState("Securing credentials...");
   const [result, setResult] = useState(null);
   const [errorMsg, setErrorMsg] = useState(null);
@@ -65,6 +67,8 @@ Badge Code: ${result.vipBadgeCode}
 Executive Name: ${formData.name}
 Designation: ${formData.designation}
 Company: ${formData.company}
+Email: ${formData.email}
+Mobile Number: ${formData.mobileNumber}
 Summit City: ${formData.city}
 Event Format: ${formData.property}
 Priority Goal: ${formData.goal}
@@ -111,8 +115,16 @@ India's Fastest Growing HR Event Platform
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name || !formData.company || !formData.designation) {
-      setErrorMsg("Please complete all executive profiles before generation.");
+    if (!formData.name || !formData.company || !formData.designation || !formData.email || !formData.mobileNumber) {
+      setErrorMsg("Please complete all required registration fields.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
+      setErrorMsg("Please provide a valid email address.");
+      return;
+    }
+    if (!/^\+?[\d\s()-]{7,20}$/.test(formData.mobileNumber.trim())) {
+      setErrorMsg("Please provide a valid mobile number.");
       return;
     }
 
@@ -168,19 +180,19 @@ India's Fastest Growing HR Event Platform
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0c0f0f]/85 backdrop-blur-md overflow-y-auto">
-      <div 
+      <div
         className="relative w-full max-w-4xl bg-[#112240] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col my-8"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header Ribbon */}
-        <div className="bg-gradient-to-r from-[#0a192f] via-[#112240] to-[#0a192f] px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
+        <div className="bg-[#0a192f] px-6 py-5 border-b border-white/10 flex justify-between items-center shrink-0">
           <div className="flex items-center gap-2.5">
             <Sparkles className="text-[#e9c349]" size={20} />
             <h3 className="font-display font-bold text-lg text-white">
-              {step === "result" ? "Executive Matchmaking Dashboard" : "AI Strategic Priority Pass Generation"}
+              {step === "result" ? "Executive Matchmaking Dashboard" : "Event Registration"}
             </h3>
           </div>
-          <button 
+          <button
             onClick={handleClose}
             className="text-[#c5c6cd] hover:text-white transition-colors"
             aria-label="Close modal"
@@ -214,6 +226,23 @@ India's Fastest Growing HR Event Platform
                     placeholder="e.g. Vikramaditya Sen"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-[#c5c6cd] tracking-widest uppercase mb-2">
+                    Mobile Number <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={formData.mobileNumber}
+                    onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
+                    className="w-full bg-[#0a192f] border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-[#e9c349] focus:outline-none"
+                    placeholder="e.g. +91 98765 43210"
+                  />
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-xs font-semibold text-[#c5c6cd] tracking-widest uppercase mb-2">
                     Corporate Designation <span className="text-red-500">*</span>
@@ -225,6 +254,19 @@ India's Fastest Growing HR Event Platform
                     onChange={(e) => setFormData({ ...formData, designation: e.target.value })}
                     className="w-full bg-[#0a192f] border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-[#e9c349] focus:outline-none"
                     placeholder="e.g. Director of Talent Acquisition"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-[#c5c6cd] tracking-widest uppercase mb-2">
+                    Email ID <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full bg-[#0a192f] border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-[#e9c349] focus:outline-none"
+                    placeholder="e.g. name@company.com"
                   />
                 </div>
               </div>
@@ -268,6 +310,9 @@ India's Fastest Growing HR Event Platform
                       onChange={(e) => setFormData({ ...formData, property: e.target.value })}
                       className="w-full bg-[#0a192f] border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-[#e9c349] focus:outline-none"
                     >
+                      {preselectedProperty && !PROPERTIES.some((p) => p.title === preselectedProperty) && (
+                        <option value={preselectedProperty}>{preselectedProperty}</option>
+                      )}
                       {PROPERTIES.map((p) => (
                         <option key={p.id} value={p.title}>{p.title}</option>
                       ))}
@@ -279,7 +324,7 @@ India's Fastest Growing HR Event Platform
 
               <div>
                 <label className="block text-xs font-semibold text-[#c5c6cd] tracking-widest uppercase mb-2">
-                  Primary Networking Goal
+                  Primary Goal
                 </label>
                 <textarea
                   value={formData.goal}
@@ -291,7 +336,7 @@ India's Fastest Growing HR Event Platform
               </div>
 
               {/* Quick Prompt Suggestions */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <span className="text-xs text-[#adc7ff] font-medium block">Or selection standard template goals:</span>
                 <div className="flex flex-wrap gap-2">
                   {[
@@ -310,7 +355,7 @@ India's Fastest Growing HR Event Platform
                     </button>
                   ))}
                 </div>
-              </div>
+              </div> */}
 
               <div className="pt-4 border-t border-white/5 flex justify-end gap-3">
                 <button
@@ -325,7 +370,7 @@ India's Fastest Growing HR Event Platform
                   className="bg-[#e9c349] text-[#0A192F] font-bold px-8 py-3 rounded-lg hover:scale-103 active:scale-98 transition-all flex items-center gap-2 cursor-pointer shadow-lg shadow-[#e9c349]/20"
                 >
                   <Sparkles size={16} />
-                  <span>Forge VIP Executive Pass</span>
+                  <span>Register</span>
                 </button>
               </div>
             </form>
@@ -351,12 +396,12 @@ India's Fastest Growing HR Event Platform
                 <h4 className="text-xs font-bold text-[#e9c349] tracking-widest uppercase block text-center">
                   Your Digitized VIP Pass
                 </h4>
-                
+
                 {/* Badge Container */}
                 <div className="relative overflow-hidden bg-gradient-to-b from-[#1e2020] via-[#0c0f0f] to-[#121414] border-2 border-[#e9c349] rounded-2xl p-6 text-center shadow-xl shadow-[#e9c349]/10 max-w-xs mx-auto">
                   {/* Subtle watermarks and styling overlays */}
                   <div className="absolute top-0 inset-x-0 h-1.5 bg-gradient-to-r from-[#e9c349] via-amber-200 to-[#e9c349]"></div>
-                  
+
                   {/* Top Header */}
                   <div className="text-[10px] font-bold text-[#e9c349] tracking-widest uppercase mb-1">
                     TALENTMAX MEET-UP
@@ -400,13 +445,13 @@ India's Fastest Growing HR Event Platform
                     <div className="inline-block bg-[#e9c349]/10 border border-[#e9c349]/30 text-[#e9c349] font-mono font-bold text-xs px-3 py-1 rounded">
                       {result.vipBadgeCode}
                     </div>
-                    
+
                     {/* Visual Barcode bar lines */}
                     <div className="flex justify-center gap-0.5 pt-3 select-none filter opacity-70">
                       {[1, 3, 1, 4, 1, 2, 4, 2, 1, 3, 1, 4, 2, 1, 3, 2, 1, 4, 1, 2].map((width, idx) => (
-                        <div 
-                          key={idx} 
-                          className="bg-[#e2e2e2] h-6" 
+                        <div
+                          key={idx}
+                          className="bg-[#e2e2e2] h-6"
                           style={{ width: `${width}px` }}
                         ></div>
                       ))}
@@ -428,7 +473,7 @@ India's Fastest Growing HR Event Platform
 
               {/* Right Column: AI Insights, Letters, Copy targets */}
               <div className="md:col-span-7 space-y-6">
-                
+
                 {/* Invitation Letter Card */}
                 <div className="bg-[#0a192f] border border-white/10 rounded-xl p-5 space-y-4">
                   <h5 className="text-xs font-bold text-[#e9c349] tracking-widest uppercase flex items-center gap-1.5 pb-2 border-b border-white/5">

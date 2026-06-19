@@ -176,6 +176,7 @@ export const TIMELINE = [
   {
     year: "24",
     title: "2024 Highlights",
+    image: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=85",
     highlights: [
       "HR Meet-Up (May)",
       "Accountant Meet-Up (July)",
@@ -187,6 +188,7 @@ export const TIMELINE = [
   {
     year: "25",
     title: "2025: Rapid Expansion",
+    image: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=1200&q=85",
     highlights: [
       "HR Meet-Up (Feb)",
       "HR Conclave (June/July)",
@@ -198,6 +200,7 @@ export const TIMELINE = [
   {
     year: "26",
     title: "2026: Future Scale",
+    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=85",
     highlights: [
       "Job Fair (Feb)",
       "ESG Industry Events (Mar)",

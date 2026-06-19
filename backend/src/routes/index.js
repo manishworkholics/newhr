@@ -5,6 +5,7 @@ import pitchRoutes from "./pitch.routes.js";
 import cmsRoutes from "./cms.routes.js";
 import uploadRoutes from "./upload.routes.js";
 import passRoutes from "./pass.routes.js";
+import companyLogoRoutes from "./companyLogo.routes.js";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use("/pitch", pitchRoutes);
 router.use("/cms", cmsRoutes);
 router.use("/uploads", uploadRoutes);
 router.use("/passes", passRoutes);
+router.use("/", companyLogoRoutes);
 
 export default router;

@@ -8,19 +8,32 @@ export const getInquiries = asyncHandler(async (_req, res) => {
 
 export const createInquiry = asyncHandler(async (req, res) => {
   const { name, company, designation, email, interestArea, message } = req.body;
+  const mobileNumber = req.body.mobileNumber || req.body.mobile || req.body.phone || req.body.phoneNumber;
 
-  if (!name || !email) {
-    res.status(400).json({ success: false, error: "Name and email are required" });
+  if (!name?.trim() || !email?.trim() || !mobileNumber?.trim()) {
+    res.status(400).json({ success: false, error: "Name, email and mobile number are required" });
+    return;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+    res.status(400).json({ success: false, error: "Please provide a valid email address" });
+    return;
+  }
+
+  const normalizedMobile = mobileNumber.trim().replace(/[\s()-]/g, "");
+  if (!/^\+?\d{7,15}$/.test(normalizedMobile)) {
+    res.status(400).json({ success: false, error: "Please provide a valid mobile number" });
     return;
   }
 
   const inquiry = await Inquiry.create({
-    name,
-    company,
-    designation,
-    email,
-    interestArea,
-    message
+    name: name.trim(),
+    company: company?.trim() || "N/A",
+    designation: designation?.trim() || "N/A",
+    email: email.trim(),
+    mobileNumber: normalizedMobile,
+    interestArea: interestArea?.trim() || "Sponsorship Opportunity",
+    message: message?.trim() || ""
   });
 
   res.status(201).json({ success: true, inquiry });
@@ -47,4 +60,13 @@ export const updateInquiryStatus = asyncHandler(async (req, res) => {
   }
 
   res.json({ success: true, inquiry });
+});
+
+export const deleteInquiry = asyncHandler(async (req, res) => {
+  const inquiry = await Inquiry.findByIdAndDelete(req.params.id);
+  if (!inquiry) {
+    res.status(404).json({ success: false, error: "Inquiry not found" });
+    return;
+  }
+  res.json({ success: true });
 });

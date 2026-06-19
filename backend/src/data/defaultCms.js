@@ -1,4 +1,5 @@
 export const defaultRoadshow = {
+  badge: "Connect India 2026",
   title: "HR Connect India 2026: The Mega Pan-India Roadshow",
   description:
     "Join our most ambitious initiative yet. A synchronized series of networking summits across India's premier industrial hubs, reaching over 1,500+ HR Leaders in a single month. Securing VIP seats aligns you with regional pioneers.",
@@ -7,7 +8,37 @@ export const defaultRoadshow = {
     { value: "12", label: "Strategic Cities Loaded" },
     { value: "1,500+", label: "HR Leaders Targeted" },
     { value: "30+", label: "Sponsor Brands Partnered" }
-  ]
+  ],
+  citySection: {
+    badge: "Cultural Heritage & Enterprise Metropolises",
+    title: "Our {{count}} Summit Cities & Their Historical Legacies",
+    description: "Every city on the TalentMax Roadshow is a unique tapestry of historic wonders and dynamic corporate powerhouses. Select a city to pre-fill your VIP matchmaking credentials.",
+    landmarkLabel: "Historic",
+    networkingLabel: "Networking Core:",
+    ctaLabel: "Reserve Matching Pass"
+  },
+  eventSection: {
+    badge: "Flagship Experiences",
+    title: "Find your next room.",
+    description: "Purpose-built formats for every level of the people function.",
+    viewAllLabel: "View all events",
+    cardCtaLabel: "View event details"
+  }
+};
+
+export const defaultAboutPage = {
+  badge: "About TalentMax",
+  title: "Creating rooms where meaningful work begins.",
+  subtitle: "TalentMax brings people leaders, founders, and workplace innovators together through carefully designed experiences across India.",
+  heroImage: "",
+  content: `
+    <h2>More than an event platform</h2>
+    <p>We create thoughtful environments where relevant people can exchange practical ideas, build trusted relationships, and discover opportunities that continue long after the event ends.</p>
+    <h2>Our purpose</h2>
+    <p>Our purpose is to strengthen India’s people-leadership community through curated audiences, useful conversations, and warm hospitality.</p>
+    <blockquote>Every agenda, room, and introduction is designed to make your time count.</blockquote>
+  `,
+  status: "Published"
 };
 
 export const defaultEvents = [
@@ -97,3 +128,52 @@ export const defaultCities = cityNames.map((name, index) => ({
   networkingVibe: "A strategic business destination for HR leaders, sponsors, consultants, and enterprise partners.",
   sortOrder: index + 1
 }));
+
+export const defaultGallery = [
+  {
+    title: "Leaders in conversation",
+    caption: "Candid peer exchange during a TalentMax leadership session.",
+    eventName: "CHRO Leadership Summit",
+    location: "Mumbai",
+    year: "2025",
+    image: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1400&q=85",
+    sortOrder: 1
+  },
+  {
+    title: "Ideas on the main stage",
+    caption: "Practical perspectives shared with India’s people leaders.",
+    eventName: "HR Conclave",
+    location: "Bengaluru",
+    year: "2025",
+    image: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=1400&q=85",
+    sortOrder: 2
+  },
+  {
+    title: "Connections beyond the agenda",
+    caption: "The conversations between sessions are often the ones that last.",
+    eventName: "HR Meet-Up",
+    location: "Indore",
+    year: "2024",
+    image: "https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=1400&q=85",
+    sortOrder: 3
+  }
+];
+
+export const defaultTestimonials = [
+  {
+    quote: "The rare event where the conversations between sessions were as valuable as the sessions themselves.",
+    name: "Priya Mehta",
+    designation: "Chief People Officer",
+    company: "Enterprise Technology",
+    status: "Published",
+    sortOrder: 1
+  },
+  {
+    quote: "TalentMax created the right balance of practical insight, senior leadership access, and genuine peer connection.",
+    name: "Arjun Kapoor",
+    designation: "Head of Talent",
+    company: "Growth Ventures",
+    status: "Published",
+    sortOrder: 2
+  }
+];

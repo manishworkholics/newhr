@@ -1,34 +1,18 @@
+import { ArrowUpRight, Linkedin, Instagram, Youtube, Sparkles } from "lucide-react";
+
 export default function Footer() {
   return (
-    <footer className="bg-[#0c0f0f] border-t border-white/10 shrink-0">
-      <div className="flex flex-col md:flex-row justify-between items-center w-full px-6 md:px-16 py-12 max-w-7xl mx-auto gap-8">
-        <div className="text-center md:text-left">
-          <div className="font-display text-lg font-bold text-[#e9c349] mb-2">
-            TalentMax Meet-Up
-          </div>
-          <p className="font-sans text-xs text-[#c5c6cd] max-w-md leading-relaxed">
-            © 2024 TalentMax Meet-Up. Building India's Most Influential HR & Business Networking Community.
-          </p>
+    <footer className="site-footer">
+      <div className="container footer-grid">
+        <div>
+          <div className="brand footer-brand"><span className="brand-mark"><Sparkles size={18} /></span><span>TalentMax<small>HR Events</small></span></div>
+          <p>Building India’s most thoughtful people-leadership community, one meaningful room at a time.</p>
         </div>
-        
-        {/* Social Anchors */}
-        <div className="flex flex-wrap gap-6 justify-center">
-          {[
-            { name: "LinkedIn", href: "#" },
-            { name: "Facebook", href: "#" },
-            { name: "Instagram", href: "#" },
-            { name: "YouTube", href: "#" }
-          ].map((soc, idx) => (
-            <a 
-              key={idx}
-              href={soc.href} 
-              className="text-[#c5c6cd] hover:text-[#e9c349] transition-colors font-sans text-xs font-semibold tracking-wider"
-            >
-              {soc.name}
-            </a>
-          ))}
-        </div>
+        <div><h4>Explore</h4><a href="/about">About us</a><a href="/events">Events</a><a href="/cities">Cities</a><a href="/portfolio">Our story</a><a href="/gallery">Gallery</a></div>
+        <div><h4>Get involved</h4><a href="#sponsors">Become a partner</a><a href="#sponsors">Apply to speak</a><a href="/about">Join the community</a></div>
+        <div><h4>Stay connected</h4><div className="socials"><a href="#" aria-label="LinkedIn"><Linkedin /></a><a href="#" aria-label="Instagram"><Instagram /></a><a href="#" aria-label="YouTube"><Youtube /></a></div><a className="footer-email" href="mailto:hello@talentmax.in">hello@talentmax.in <ArrowUpRight size={14} /></a></div>
       </div>
+      <div className="container footer-bottom"><span>© 2026 TalentMax Meet-Up. All rights reserved.</span><div><a href="#">Privacy</a><a href="#">Terms</a></div></div>
     </footer>
   );
 }

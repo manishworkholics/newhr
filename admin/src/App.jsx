@@ -1,14 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+  BookOpen,
   CalendarDays,
   CheckCircle2,
   CirclePlus,
   ClipboardList,
+  Download,
   Edit3,
   Globe2,
+  Images,
+  Image,
   LayoutDashboard,
   Loader2,
   MapPin,
+  MessageSquareQuote,
   Menu,
   Save,
   Search,
@@ -18,13 +23,32 @@ import {
   Upload,
   X
 } from "lucide-react";
+import { CKEditor } from "@ckeditor/ckeditor5-react";
+import {
+  BlockQuote,
+  Bold,
+  ClassicEditor,
+  Essentials,
+  Heading,
+  Italic,
+  Link,
+  List,
+  Paragraph,
+  Undo
+} from "ckeditor5";
+import "ckeditor5/ckeditor5.css";
 import { apiRequest, uploadImage } from "./api";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "roadshow", label: "Roadshow CMS", icon: Globe2 },
+  { id: "about", label: "About Us", icon: BookOpen },
   { id: "events", label: "Flagship Events", icon: CalendarDays },
+  { id: "upcoming-events", label: "Upcoming Events", icon: CalendarDays },
   { id: "cities", label: "Cities", icon: MapPin },
+  { id: "gallery", label: "Gallery", icon: Images },
+  { id: "testimonials", label: "Testimonials", icon: MessageSquareQuote },
+  { id: "company-logos", label: "Company Logos", icon: Image },
   { id: "inquiries", label: "Form Inquiries", icon: ClipboardList },
   { id: "passes", label: "VIP Passes", icon: Ticket },
   { id: "settings", label: "Settings", icon: Settings }
@@ -35,11 +59,27 @@ const emptyRoadshow = {
   title: "",
   description: "",
   ctaLabel: "",
+  eventSection: {
+    badge: "",
+    title: "",
+    description: "",
+    viewAllLabel: "",
+    cardCtaLabel: ""
+  },
   metrics: [
     { value: "", label: "" },
     { value: "", label: "" },
     { value: "", label: "" }
   ]
+};
+
+const emptyAbout = {
+  badge: "",
+  title: "",
+  subtitle: "",
+  heroImage: "",
+  content: "",
+  status: "Published"
 };
 
 export default function App() {
@@ -50,8 +90,13 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [editor, setEditor] = useState(null);
   const [roadshow, setRoadshow] = useState(emptyRoadshow);
+  const [about, setAbout] = useState(emptyAbout);
   const [events, setEvents] = useState([]);
+  const [upcomingEvents, setUpcomingEvents] = useState([]);
   const [cities, setCities] = useState([]);
+  const [gallery, setGallery] = useState([]);
+  const [testimonials, setTestimonials] = useState([]);
+  const [companyLogos, setCompanyLogos] = useState([]);
   const [inquiries, setInquiries] = useState([]);
   const [passes, setPasses] = useState([]);
 
@@ -63,14 +108,20 @@ export default function App() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [cms, inquiryData, passData] = await Promise.all([
+      const [cms, inquiryData, passData, companyLogoData] = await Promise.all([
         apiRequest("/cms"),
         apiRequest("/inquiries"),
-        apiRequest("/passes")
+        apiRequest("/passes"),
+        apiRequest("/admin/company-logos")
       ]);
       setRoadshow(cms.roadshow || emptyRoadshow);
+      setAbout(cms.about || emptyAbout);
       setEvents(cms.events || []);
+      setUpcomingEvents(cms.upcomingEvents || []);
       setCities(cms.cities || []);
+      setGallery(cms.gallery || []);
+      setTestimonials(cms.testimonials || []);
+      setCompanyLogos(companyLogoData.companyLogos || []);
       setInquiries(inquiryData.inquiries || []);
       setPasses(passData.passes || []);
     } finally {
@@ -93,6 +144,19 @@ export default function App() {
         body: JSON.stringify(roadshow)
       });
       setRoadshow(data.roadshow);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const saveAbout = async () => {
+    setSaving(true);
+    try {
+      const data = await apiRequest("/cms/about", {
+        method: "PUT",
+        body: JSON.stringify(about)
+      });
+      setAbout(data.about);
     } finally {
       setSaving(false);
     }
@@ -149,6 +213,101 @@ export default function App() {
         }
       }
 
+      if (editor.type === "gallery") {
+        const payload = {
+          title: form.title,
+          caption: form.caption,
+          image: form.image,
+          eventName: form.eventName,
+          location: form.location,
+          year: form.year,
+          status: form.status || "Published",
+          sortOrder: Number(form.sortOrder || 0)
+        };
+        if (editor.data?.id) {
+          await apiRequest(`/cms/gallery/${editor.data.id}`, {
+            method: "PUT",
+            body: JSON.stringify(payload)
+          });
+        } else {
+          await apiRequest("/cms/gallery", {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+        }
+      }
+
+      if (editor.type === "upcoming-event") {
+        const payload = {
+          slug: form.slug || slugify(form.title),
+          title: form.title,
+          subtitle: form.subtitle,
+          badge: form.badge,
+          image: form.image,
+          details: form.details,
+          status: form.status,
+          sortOrder: Number(form.sortOrder || 0)
+        };
+        if (editor.data?.id) {
+          await apiRequest(`/cms/upcoming-events/${editor.data.id}`, {
+            method: "PUT",
+            body: JSON.stringify(payload)
+          });
+        } else {
+          await apiRequest("/cms/upcoming-events", {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+        }
+      }
+
+      if (editor.type === "testimonial") {
+        const payload = {
+          quote: form.quote,
+          name: form.name,
+          designation: form.designation,
+          company: form.company,
+          image: form.image,
+          status: form.status || "Published",
+          sortOrder: Number(form.sortOrder || 0)
+        };
+        if (editor.data?.id) {
+          await apiRequest(`/cms/testimonials/${editor.data.id}`, {
+            method: "PUT",
+            body: JSON.stringify(payload)
+          });
+        } else {
+          await apiRequest("/cms/testimonials", {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+        }
+      }
+
+      if (editor.type === "company-logo") {
+        if (!form.companyName?.trim() || !form.logoImage?.trim()) {
+          window.alert("Company name and logo image are required.");
+          return;
+        }
+        const payload = {
+          companyName: form.companyName.trim(),
+          logoImage: form.logoImage.trim(),
+          isActive: form.isActive !== false,
+          sortOrder: Number(form.sortOrder || 0)
+        };
+        if (editor.data?.id) {
+          await apiRequest(`/admin/company-logos/${editor.data.id}`, {
+            method: "PUT",
+            body: JSON.stringify(payload)
+          });
+        } else {
+          await apiRequest("/admin/company-logos", {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+        }
+      }
+
       setEditor(null);
       await loadAll();
     } finally {
@@ -159,9 +318,22 @@ export default function App() {
   const deleteRecord = async (type, id) => {
     if (!window.confirm("Delete this record?")) return;
     if (type === "event") await apiRequest(`/cms/events/${id}`, { method: "DELETE" });
+    if (type === "upcoming-event") await apiRequest(`/cms/upcoming-events/${id}`, { method: "DELETE" });
     if (type === "city") await apiRequest(`/cms/cities/${id}`, { method: "DELETE" });
+    if (type === "gallery") await apiRequest(`/cms/gallery/${id}`, { method: "DELETE" });
+    if (type === "testimonial") await apiRequest(`/cms/testimonials/${id}`, { method: "DELETE" });
+    if (type === "company-logo") await apiRequest(`/admin/company-logos/${id}`, { method: "DELETE" });
+    if (type === "inquiry") await apiRequest(`/inquiries/${id}`, { method: "DELETE" });
     if (type === "pass") await apiRequest(`/passes/${id}`, { method: "DELETE" });
     await loadAll();
+  };
+
+  const updateInquiryStatus = async (id, status) => {
+    const data = await apiRequest(`/inquiries/${id}/status`, {
+      method: "PATCH",
+      body: JSON.stringify({ status })
+    });
+    setInquiries((current) => current.map((item) => item.id === id ? data.inquiry : item));
   };
 
   return (
@@ -185,18 +357,39 @@ export default function App() {
           ) : (
             <>
               {active === "overview" && (
-                <Overview roadshow={roadshow} events={events} cities={cities} inquiries={inquiries} passes={passes} onEdit={setEditor} />
+                <Overview roadshow={roadshow} events={events} cities={cities} gallery={gallery} inquiries={inquiries} passes={passes} onEdit={setEditor} />
               )}
               {active === "roadshow" && (
                 <RoadshowForm roadshow={roadshow} setRoadshow={setRoadshow} onSave={saveRoadshow} saving={saving} />
               )}
+              {active === "about" && (
+                <AboutPageForm about={about} setAbout={setAbout} onSave={saveAbout} saving={saving} />
+              )}
               {active === "events" && (
                 <EventGrid events={events} onEdit={setEditor} onDelete={(id) => deleteRecord("event", id)} />
+              )}
+              {active === "upcoming-events" && (
+                <EventGrid events={upcomingEvents} type="upcoming-event" title="Upcoming Events" buttonLabel="Add Upcoming Event" onEdit={setEditor} onDelete={(id) => deleteRecord("upcoming-event", id)} />
               )}
               {active === "cities" && (
                 <CityGrid cities={cities} onEdit={setEditor} onDelete={(id) => deleteRecord("city", id)} />
               )}
-              {active === "inquiries" && <InquiryTable rows={filterRows(inquiries, query)} />}
+              {active === "gallery" && (
+                <GalleryGrid gallery={filterRows(gallery, query)} onEdit={setEditor} onDelete={(id) => deleteRecord("gallery", id)} />
+              )}
+              {active === "testimonials" && (
+                <TestimonialGrid testimonials={filterRows(testimonials, query)} onEdit={setEditor} onDelete={(id) => deleteRecord("testimonial", id)} />
+              )}
+              {active === "company-logos" && (
+                <CompanyLogoGrid companyLogos={filterRows(companyLogos, query)} onEdit={setEditor} onDelete={(id) => deleteRecord("company-logo", id)} />
+              )}
+              {active === "inquiries" && (
+                <InquiryTable
+                  rows={filterRows(inquiries, query)}
+                  onStatusChange={updateInquiryStatus}
+                  onDelete={(id) => deleteRecord("inquiry", id)}
+                />
+              )}
               {active === "passes" && (
                 <PassTable rows={filterRows(passes, query)} onDelete={(id) => deleteRecord("pass", id)} />
               )}
@@ -268,12 +461,12 @@ function Topbar({ title, query, setQuery, onMenu }) {
   );
 }
 
-function Overview({ roadshow, events, cities, inquiries, passes, onEdit }) {
+function Overview({ roadshow, events, cities, gallery, inquiries, passes, onEdit }) {
   const stats = [
     { label: "CMS Events", value: events.length, trend: "MongoDB" },
     { label: "Cities", value: cities.length, trend: "Dynamic" },
-    { label: "Form Inquiries", value: inquiries.length, trend: "Saved" },
-    { label: "VIP Passes", value: passes.length, trend: "Generated" }
+    { label: "Gallery Images", value: gallery.length, trend: "Published" },
+    { label: "Form Inquiries", value: inquiries.length, trend: "Saved" }
   ];
   return (
     <div className="space-y-6">
@@ -324,11 +517,84 @@ function RoadshowPreview({ roadshow, cities }) {
   );
 }
 
+function AboutPageForm({ about, setAbout, onSave, saving }) {
+  const [uploading, setUploading] = useState(false);
+
+  const uploadHero = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const heroImage = await uploadImage(file);
+      setAbout({ ...about, heroImage });
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0b1f37] p-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-extrabold">About Us Page</h2>
+          <p className="mt-1 text-sm text-slate-400">Manage the content displayed on the public About Us page.</p>
+        </div>
+        <button onClick={onSave} disabled={saving} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2.5 font-extrabold text-[#061527] disabled:opacity-60">
+          <Save size={16} /> Save
+        </button>
+      </div>
+
+      <div className="grid gap-5">
+        <Input label="Badge" value={about.badge} onChange={(badge) => setAbout({ ...about, badge })} />
+        <Input label="Page Title" value={about.title} onChange={(title) => setAbout({ ...about, title })} />
+        <Textarea label="Subtitle" value={about.subtitle} onChange={(subtitle) => setAbout({ ...about, subtitle })} />
+
+        <div className="rounded-lg border border-white/10 p-4">
+          <Input label="Hero Image URL" value={about.heroImage} onChange={(heroImage) => setAbout({ ...about, heroImage })} />
+          <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-[#f4c842]/40 p-4 text-sm font-bold text-[#f4c842]">
+            {uploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+            Upload Hero Image
+            <input type="file" accept="image/*" className="hidden" onChange={(event) => uploadHero(event.target.files?.[0])} />
+          </label>
+          {about.heroImage && <img src={about.heroImage} alt="" className="mt-3 h-52 w-full rounded-md object-cover" />}
+        </div>
+
+        <div className="about-editor">
+          <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">Page Content</span>
+          <CKEditor
+            editor={ClassicEditor}
+            data={about.content || ""}
+            config={{
+              licenseKey: "GPL",
+              plugins: [Essentials, Paragraph, Heading, Bold, Italic, Link, List, BlockQuote, Undo],
+              toolbar: ["undo", "redo", "|", "heading", "|", "bold", "italic", "link", "bulletedList", "numberedList", "blockQuote"]
+            }}
+            onChange={(_event, editorInstance) => setAbout({ ...about, content: editorInstance.getData() })}
+          />
+        </div>
+
+        <label className="block">
+          <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">Status</span>
+          <select value={about.status || "Published"} onChange={(event) => setAbout({ ...about, status: event.target.value })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]">
+            <option value="Published">Published</option>
+            <option value="Draft">Draft</option>
+          </select>
+        </label>
+      </div>
+    </section>
+  );
+}
+
 function RoadshowForm({ roadshow, setRoadshow, onSave, saving }) {
   const setMetric = (index, key, value) => {
     const metrics = [...(roadshow.metrics || [])];
     metrics[index] = { ...metrics[index], [key]: value };
     setRoadshow({ ...roadshow, metrics });
+  };
+  const setEventSection = (key, value) => {
+    setRoadshow({
+      ...roadshow,
+      eventSection: { ...(roadshow.eventSection || {}), [key]: value }
+    });
   };
   return (
     <section className="rounded-xl border border-white/10 bg-[#0b1f37] p-6">
@@ -351,20 +617,30 @@ function RoadshowForm({ roadshow, setRoadshow, onSave, saving }) {
             </div>
           ))}
         </div>
+        <div className="mt-4 grid gap-4 border-t border-white/10 pt-6">
+          <h3 className="font-display text-xl font-extrabold">Upcoming Events Section</h3>
+          <Input label="Section Badge" value={roadshow.eventSection?.badge || ""} onChange={(v) => setEventSection("badge", v)} />
+          <Input label="Section Title" value={roadshow.eventSection?.title || ""} onChange={(v) => setEventSection("title", v)} />
+          <Textarea label="Section Description" value={roadshow.eventSection?.description || ""} onChange={(v) => setEventSection("description", v)} />
+          <div className="grid gap-4 md:grid-cols-2">
+            <Input label="View All Label" value={roadshow.eventSection?.viewAllLabel || ""} onChange={(v) => setEventSection("viewAllLabel", v)} />
+            <Input label="Card CTA Label" value={roadshow.eventSection?.cardCtaLabel || ""} onChange={(v) => setEventSection("cardCtaLabel", v)} />
+          </div>
+        </div>
       </div>
     </section>
   );
 }
 
-function EventGrid({ events, onEdit, onDelete, compact }) {
+function EventGrid({ events, onEdit, onDelete, compact, type = "event", title = "Flagship Properties", buttonLabel = "Add Format" }) {
   return (
     <section className="rounded-xl border border-white/10 bg-[#071a30] p-5 lg:p-6">
       <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f4c842]">Bespoke Summits</div>
-          <h2 className="mt-2 font-display text-3xl font-extrabold text-white">Flagship Properties</h2>
+          <h2 className="mt-2 font-display text-3xl font-extrabold text-white">{title}</h2>
         </div>
-        {!compact && <button onClick={() => onEdit({ type: "event" })} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-sm font-extrabold text-[#061527]"><CirclePlus size={16} /> Add Format</button>}
+        {!compact && <button onClick={() => onEdit({ type })} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-sm font-extrabold text-[#061527]"><CirclePlus size={16} /> {buttonLabel}</button>}
       </div>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
         {events.map((event) => (
@@ -376,7 +652,7 @@ function EventGrid({ events, onEdit, onDelete, compact }) {
             <div className="p-5">
               <h3 className="font-display text-lg font-extrabold text-white">{event.title}</h3>
               <p className="mt-2 min-h-12 text-sm leading-6 text-slate-300">{event.subtitle}</p>
-              {!compact && <div className="mt-5 flex gap-2"><ActionButton onClick={() => onEdit({ type: "event", data: event })} /><DeleteButton onClick={() => onDelete(event.id)} /></div>}
+              {!compact && <div className="mt-5 flex gap-2"><ActionButton onClick={() => onEdit({ type, data: event })} /><DeleteButton onClick={() => onDelete(event.id)} /></div>}
             </div>
           </article>
         ))}
@@ -406,12 +682,239 @@ function CityGrid({ cities, onEdit, onDelete }) {
   );
 }
 
-function InquiryTable({ rows }) {
-  return <DataTable title="Form Inquiries" rows={rows} columns={["name", "company", "designation", "email", "interestArea", "status"]} />;
+function GalleryGrid({ gallery, onEdit, onDelete }) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0b1f37] p-5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f4c842]">Visual CMS</div>
+          <h2 className="mt-2 font-display text-2xl font-extrabold">Gallery Images</h2>
+        </div>
+        <button onClick={() => onEdit({ type: "gallery" })} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-sm font-extrabold text-[#061527]">
+          <CirclePlus size={16} /> Add Image
+        </button>
+      </div>
+      {gallery.length ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {gallery.map((item) => (
+            <article key={item.id} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.03]">
+              <div className="relative h-52 bg-black">
+                <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
+                <span className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase ${item.status === "Draft" ? "bg-slate-800 text-slate-300" : "bg-emerald-500 text-white"}`}>{item.status || "Published"}</span>
+              </div>
+              <div className="p-4">
+                <h3 className="font-display text-lg font-extrabold">{item.title}</h3>
+                <p className="mt-1 text-xs text-slate-400">{[item.eventName, item.location, item.year].filter(Boolean).join(" · ")}</p>
+                <p className="mt-3 line-clamp-2 min-h-10 text-xs leading-5 text-slate-300">{item.caption || "No caption added."}</p>
+                <div className="mt-4 flex gap-2"><ActionButton onClick={() => onEdit({ type: "gallery", data: item })} /><DeleteButton onClick={() => onDelete(item.id)} /></div>
+              </div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-white/10 py-16 text-center text-sm text-slate-400">No gallery images yet. Add the first one.</div>
+      )}
+    </section>
+  );
+}
+
+function CompanyLogoGrid({ companyLogos, onEdit, onDelete }) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0b1f37] p-5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f4c842]">Partner CMS</div>
+          <h2 className="mt-2 font-display text-2xl font-extrabold">Company Logos</h2>
+        </div>
+        <button onClick={() => onEdit({ type: "company-logo" })} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-sm font-extrabold text-[#061527]">
+          <CirclePlus size={16} /> Add Company Logo
+        </button>
+      </div>
+
+      {companyLogos.length ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {companyLogos.map((item) => (
+            <article key={item.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="flex h-32 items-center justify-center rounded-lg bg-white p-5">
+                <img src={item.logoImage} alt={item.companyName} className="max-h-full max-w-full object-contain" />
+              </div>
+              <div className="mt-4 flex items-start justify-between gap-3">
+                <div>
+                  <h3 className="font-display font-extrabold">{item.companyName}</h3>
+                  <p className="mt-1 text-xs text-slate-400">Display order: {item.sortOrder}</p>
+                </div>
+                <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase ${item.isActive ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-300"}`}>
+                  {item.isActive ? "Active" : "Inactive"}
+                </span>
+              </div>
+              <div className="mt-4 flex gap-2"><ActionButton onClick={() => onEdit({ type: "company-logo", data: item })} /><DeleteButton onClick={() => onDelete(item.id)} /></div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-white/10 py-16 text-center text-sm text-slate-400">No company logos yet. Add the first one.</div>
+      )}
+    </section>
+  );
+}
+
+function TestimonialGrid({ testimonials, onEdit, onDelete }) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0b1f37] p-5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f4c842]">Social Proof CMS</div>
+          <h2 className="mt-2 font-display text-2xl font-extrabold">Testimonials</h2>
+        </div>
+        <button onClick={() => onEdit({ type: "testimonial" })} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-sm font-extrabold text-[#061527]">
+          <CirclePlus size={16} /> Add Testimonial
+        </button>
+      </div>
+
+      {testimonials.length ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {testimonials.map((item) => (
+            <article key={item.id} className="rounded-xl border border-white/10 bg-white/[0.03] p-5">
+              <div className="flex items-start justify-between gap-4">
+                <MessageSquareQuote className="text-[#f4c842]" size={28} />
+                <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase ${item.status === "Draft" ? "bg-slate-800 text-slate-300" : "bg-emerald-500 text-white"}`}>{item.status}</span>
+              </div>
+              <p className="mt-4 line-clamp-5 min-h-24 text-sm leading-6 text-slate-200">“{item.quote}”</p>
+              <div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
+                {item.image && <img src={item.image} alt={item.name} className="h-11 w-11 rounded-full object-cover" />}
+                <div>
+                  <h3 className="font-display font-extrabold">{item.name}</h3>
+                  <p className="text-xs text-slate-400">{[item.designation, item.company].filter(Boolean).join(" · ")}</p>
+                </div>
+              </div>
+              <div className="mt-4 flex gap-2"><ActionButton onClick={() => onEdit({ type: "testimonial", data: item })} /><DeleteButton onClick={() => onDelete(item.id)} /></div>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-lg border border-dashed border-white/10 py-16 text-center text-sm text-slate-400">No testimonials yet. Add the first one.</div>
+      )}
+    </section>
+  );
+}
+
+function InquiryTable({ rows, onStatusChange, onDelete }) {
+  const [interestFilter, setInterestFilter] = useState("All");
+  const interests = [
+    "Sponsorship Opportunity",
+    "Speaking Opportunity",
+    "Event Registration",
+    "General Inquiry"
+  ];
+  const visibleRows = interestFilter === "All"
+    ? rows
+    : rows.filter((row) => row.interestArea === interestFilter);
+
+  const exportExcel = () => {
+    const escapeXml = (value) => String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+    const columns = [
+      ["Name", "name"],
+      ["Company", "company"],
+      ["Designation", "designation"],
+      ["Email", "email"],
+      ["Mobile", "mobileNumber"],
+      ["Interest", "interestArea"],
+      ["Message", "message"],
+      ["Submitted", "submitted"],
+      ["Status", "status"]
+    ];
+    const header = columns.map(([label]) => `<Cell><Data ss:Type="String">${escapeXml(label)}</Data></Cell>`).join("");
+    const body = visibleRows.map((row) => {
+      const exportRow = {
+        ...row,
+        submitted: new Date(row.timestamp || row.createdAt).toLocaleString()
+      };
+      const cells = columns.map(([, key]) => `<Cell><Data ss:Type="String">${escapeXml(exportRow[key])}</Data></Cell>`).join("");
+      return `<Row>${cells}</Row>`;
+    }).join("");
+    const workbook = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Form Inquiries"><Table><Row>${header}</Row>${body}</Table></Worksheet></Workbook>`;
+    const url = URL.createObjectURL(new Blob([workbook], { type: "application/vnd.ms-excel" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `form-inquiries-${new Date().toISOString().slice(0, 10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0b1f37]">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
+        <div>
+          <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f4c842]">Partnership CRM</div>
+          <h2 className="mt-2 font-display text-2xl font-extrabold">Form Inquiries</h2>
+        </div>
+        <div className="flex flex-wrap items-center gap-3">
+          <select value={interestFilter} onChange={(event) => setInterestFilter(event.target.value)} className="rounded-lg border border-white/10 bg-[#061527] px-3 py-2 text-xs text-white outline-none focus:border-[#f4c842]">
+            <option value="All">All Interests</option>
+            {interests.map((interest) => <option key={interest} value={interest}>{interest}</option>)}
+          </select>
+          <button onClick={exportExcel} disabled={!visibleRows.length} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-xs font-extrabold text-[#061527] disabled:opacity-50">
+            <Download size={15} /> Export Excel
+          </button>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-bold text-slate-300">{visibleRows.length} records</span>
+        </div>
+      </div>
+      {visibleRows.length ? (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[1250px] text-left text-sm">
+            <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-slate-400">
+              <tr>
+                <th className="px-5 py-4">Name</th>
+                <th className="px-5 py-4">Company / Designation</th>
+                <th className="px-5 py-4">Email</th>
+                <th className="px-5 py-4">Mobile</th>
+                <th className="px-5 py-4">Interest</th>
+                <th className="px-5 py-4">Message</th>
+                <th className="px-5 py-4">Submitted</th>
+                <th className="px-5 py-4">Status</th>
+                <th className="px-5 py-4">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {visibleRows.map((row) => (
+                <tr key={row.id} className="align-top hover:bg-white/[0.02]">
+                  <td className="px-5 py-4 font-display font-extrabold text-white">{row.name}</td>
+                  <td className="px-5 py-4 text-xs text-slate-300">
+                    <strong className="block text-white">{row.company || "N/A"}</strong>
+                    <span className="mt-1 block text-slate-400">{row.designation || "N/A"}</span>
+                  </td>
+                  <td className="px-5 py-4"><a href={`mailto:${row.email}`} className="font-semibold text-[#f4c842]">{row.email}</a></td>
+                  <td className="px-5 py-4"><a href={`tel:${row.mobileNumber}`} className="text-slate-300">{row.mobileNumber || "No mobile number"}</a></td>
+                  <td className="px-5 py-4 text-xs font-bold uppercase text-slate-400">{row.interestArea}</td>
+                  <td className="max-w-xs whitespace-pre-wrap px-5 py-4 text-xs leading-5 text-slate-300">{row.message || "No message provided."}</td>
+                  <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">{new Date(row.timestamp || row.createdAt).toLocaleString()}</td>
+                  <td className="px-5 py-4">
+                    <select value={row.status} onChange={(event) => onStatusChange(row.id, event.target.value)} className="min-w-40 rounded-lg border border-white/10 bg-[#061527] px-3 py-2 text-xs text-white outline-none focus:border-[#f4c842]">
+                      <option value="Pending Review">Pending Review</option>
+                      <option value="Approved VIP">Approved VIP</option>
+                      <option value="Bypassed">Bypassed</option>
+                      <option value="Rejected">Rejected</option>
+                    </select>
+                  </td>
+                  <td className="px-5 py-4"><DeleteButton onClick={() => onDelete(row.id)} /></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="py-20 text-center text-sm text-slate-400">No inquiries found.</div>
+      )}
+    </section>
+  );
 }
 
 function PassTable({ rows, onDelete }) {
-  return <DataTable title="VIP Pass Requests" rows={rows} columns={["name", "company", "designation", "city", "property", "vipBadgeCode", "status"]} onDelete={onDelete} />;
+  return <DataTable title="VIP Pass Requests" rows={rows} columns={["name", "email", "mobileNumber", "company", "designation", "city", "property", "vipBadgeCode", "status"]} onDelete={onDelete} />;
 }
 
 function DataTable({ title, rows, columns, onDelete }) {
@@ -441,17 +944,22 @@ function EditorDrawer({ editor, onClose, onSave, saving }) {
   }, [editor]);
   if (!editor) return null;
   const isEvent = editor.type === "event";
+  const isUpcomingEvent = editor.type === "upcoming-event";
+  const isGallery = editor.type === "gallery";
+  const isTestimonial = editor.type === "testimonial";
+  const isCompanyLogo = editor.type === "company-logo";
+  const editorLabel = isEvent ? "Event" : isUpcomingEvent ? "Upcoming Event" : isGallery ? "Gallery Image" : isTestimonial ? "Testimonial" : isCompanyLogo ? "Company Logo" : "City";
   return (
     <div className="fixed inset-0 z-[70] bg-black/55">
       <div className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col border-l border-white/10 bg-[#091b30] shadow-2xl">
         <div className="flex items-center justify-between border-b border-white/10 p-5">
-          <h2 className="font-display text-2xl font-extrabold">{form.id ? "Edit" : "Add"} {isEvent ? "Event" : "City"}</h2>
+          <h2 className="font-display text-2xl font-extrabold">{form.id ? "Edit" : "Add"} {editorLabel}</h2>
           <button onClick={onClose}><X /></button>
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           <div className="grid gap-4">
-            {isEvent ? <EventFields form={form} setForm={setForm} /> : <CityFields form={form} setForm={setForm} />}
-            <ImageField form={form} setForm={setForm} />
+            {isEvent || isUpcomingEvent ? <EventFields form={form} setForm={setForm} /> : isGallery ? <GalleryFields form={form} setForm={setForm} /> : isTestimonial ? <TestimonialFields form={form} setForm={setForm} /> : isCompanyLogo ? <CompanyLogoFields form={form} setForm={setForm} /> : <CityFields form={form} setForm={setForm} />}
+            {isCompanyLogo ? <CompanyLogoImageField form={form} setForm={setForm} /> : <ImageField form={form} setForm={setForm} />}
           </div>
         </div>
         <div className="flex justify-end gap-3 border-t border-white/10 p-5">
@@ -471,6 +979,13 @@ function EventFields({ form, setForm }) {
       <Input label="Subtitle" value={form.subtitle || ""} onChange={(v) => setForm({ ...form, subtitle: v })} />
       <Input label="Badge" value={form.badge || ""} onChange={(v) => setForm({ ...form, badge: v })} />
       <Textarea label="Details, one per line" value={Array.isArray(form.details) ? form.details.join("\n") : form.details || ""} onChange={(v) => setForm({ ...form, details: v })} />
+      <label className="block">
+        <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">Status</span>
+        <select value={form.status || "Published"} onChange={(event) => setForm({ ...form, status: event.target.value })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]">
+          <option value="Published">Published</option>
+          <option value="Draft">Draft</option>
+        </select>
+      </label>
       <Input label="Sort Order" value={form.sortOrder || ""} onChange={(v) => setForm({ ...form, sortOrder: v })} />
     </>
   );
@@ -486,6 +1001,88 @@ function CityFields({ form, setForm }) {
       <Textarea label="Networking Vibe" value={form.networkingVibe || ""} onChange={(v) => setForm({ ...form, networkingVibe: v })} />
       <Input label="Sort Order" value={form.sortOrder || ""} onChange={(v) => setForm({ ...form, sortOrder: v })} />
     </>
+  );
+}
+
+function GalleryFields({ form, setForm }) {
+  return (
+    <>
+      <Input label="Image Title" value={form.title || ""} onChange={(v) => setForm({ ...form, title: v })} />
+      <Textarea label="Caption" value={form.caption || ""} onChange={(v) => setForm({ ...form, caption: v })} />
+      <Input label="Event Name" value={form.eventName || ""} onChange={(v) => setForm({ ...form, eventName: v })} />
+      <div className="grid grid-cols-2 gap-3">
+        <Input label="Location" value={form.location || ""} onChange={(v) => setForm({ ...form, location: v })} />
+        <Input label="Year" value={form.year || ""} onChange={(v) => setForm({ ...form, year: v })} />
+      </div>
+      <label className="block">
+        <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">Status</span>
+        <select value={form.status || "Published"} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]">
+          <option value="Published">Published</option>
+          <option value="Draft">Draft</option>
+        </select>
+      </label>
+      <Input label="Sort Order" value={form.sortOrder || ""} onChange={(v) => setForm({ ...form, sortOrder: v })} />
+    </>
+  );
+}
+
+function TestimonialFields({ form, setForm }) {
+  return (
+    <>
+      <Textarea label="Testimonial Quote" value={form.quote || ""} onChange={(quote) => setForm({ ...form, quote })} />
+      <Input label="Name" value={form.name || ""} onChange={(name) => setForm({ ...form, name })} />
+      <Input label="Designation" value={form.designation || ""} onChange={(designation) => setForm({ ...form, designation })} />
+      <Input label="Company" value={form.company || ""} onChange={(company) => setForm({ ...form, company })} />
+      <label className="block">
+        <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">Status</span>
+        <select value={form.status || "Published"} onChange={(event) => setForm({ ...form, status: event.target.value })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]">
+          <option value="Published">Published</option>
+          <option value="Draft">Draft</option>
+        </select>
+      </label>
+      <Input label="Sort Order" value={form.sortOrder || ""} onChange={(sortOrder) => setForm({ ...form, sortOrder })} />
+    </>
+  );
+}
+
+function CompanyLogoFields({ form, setForm }) {
+  return (
+    <>
+      <Input label="Company Name" value={form.companyName || ""} onChange={(companyName) => setForm({ ...form, companyName })} />
+      <label className="block">
+        <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">Status</span>
+        <select value={form.isActive === false ? "Inactive" : "Active"} onChange={(event) => setForm({ ...form, isActive: event.target.value === "Active" })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]">
+          <option value="Active">Active</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </label>
+      <Input label="Display Order" value={form.sortOrder ?? ""} onChange={(sortOrder) => setForm({ ...form, sortOrder })} />
+    </>
+  );
+}
+
+function CompanyLogoImageField({ form, setForm }) {
+  const [uploading, setUploading] = useState(false);
+  const handleFile = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const logoImage = await uploadImage(file);
+      setForm({ ...form, logoImage });
+    } finally {
+      setUploading(false);
+    }
+  };
+  return (
+    <div className="rounded-lg border border-white/10 p-4">
+      <Input label="Logo Image URL" value={form.logoImage || ""} onChange={(logoImage) => setForm({ ...form, logoImage })} />
+      <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-[#f4c842]/40 p-4 text-sm font-bold text-[#f4c842]">
+        {uploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
+        Upload Logo
+        <input type="file" accept="image/*" className="hidden" onChange={(event) => handleFile(event.target.files?.[0])} />
+      </label>
+      {form.logoImage && <div className="mt-3 flex h-36 items-center justify-center rounded-md bg-white p-4"><img src={form.logoImage} alt="" className="max-h-full max-w-full object-contain" /></div>}
+    </div>
   );
 }
 

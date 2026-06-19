@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { X, Search, ShieldCheck, Mail, Calendar, FileText, Filter, CheckCircle2, RotateCcw, AlertCircle, Building, CircleCheck, BarChart3, Diamond, Star, Award, Layers } from "lucide-react";
+import { X, Search, ShieldCheck, Mail, Phone, Calendar, FileText, Filter, CheckCircle2, RotateCcw, AlertCircle, Building, CircleCheck, BarChart3, Diamond, Star, Award, Layers } from "lucide-react";
 import { apiRequest } from "../api";
 
 export default function InquiryDashboard({ isOpen, onClose, onInquirySubmittedCounter }) {
@@ -85,7 +85,8 @@ export default function InquiryDashboard({ isOpen, onClose, onInquirySubmittedCo
       inq.name.toLowerCase().includes(search.toLowerCase()) ||
       inq.company.toLowerCase().includes(search.toLowerCase()) ||
       inq.designation.toLowerCase().includes(search.toLowerCase()) ||
-      inq.message.toLowerCase().includes(search.toLowerCase());
+      inq.message.toLowerCase().includes(search.toLowerCase()) ||
+      (inq.mobileNumber || "").includes(search);
       
     const matchesInterest = interestFilter === "All" || inq.interestArea === interestFilter;
     
@@ -253,6 +254,12 @@ export default function InquiryDashboard({ isOpen, onClose, onInquirySubmittedCo
                           <Mail size={12} />
                           {inq.email}
                         </span>
+                        {inq.mobileNumber && (
+                          <span className="flex items-center gap-1">
+                            <Phone size={12} />
+                            {inq.mobileNumber}
+                          </span>
+                        )}
                       </div>
                     </div>
 
