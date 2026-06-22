@@ -72,7 +72,6 @@ export default function EventDetailPage() {
               <div className="event-detail-heading">
                 {event.badge && <span className="detail-badge">{event.badge}</span>}
                 <h1>{event.title}</h1>
-                <p>{event.subtitle}</p>
               </div>
             </div>
           </div>

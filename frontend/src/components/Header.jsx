@@ -9,10 +9,10 @@ const navItems = [
   { id: "cities", label: "Cities", path: "/cities" },
   { id: "portfolio", label: "Our story", path: "/portfolio" },
   { id: "gallery", label: "Gallery", path: "/gallery" },
-  { id: "sponsors", label: "Partners", path: "/sponsors" }
+  { id: "sponsors", label: "Partners", path: "/partners" }
 ];
 
-const sectionIds = ["about", "events", "destinations", "portfolio", "sponsors"];
+const sectionIds = ["about", "events", "destinations", "portfolio", "partners"];
 const sectionToNav = { destinations: "cities" };
 const pathToNav = [
   { path: "/about", id: "about" },
@@ -21,7 +21,7 @@ const pathToNav = [
   { path: "/destinations", id: "cities" },
   { path: "/portfolio", id: "portfolio" },
   { path: "/gallery", id: "gallery" },
-  { path: "/sponsors", id: "sponsors" }
+  { path: "/sponsors", id: "partners" }
 ];
 
 export default function Header({ onOpenRegister, onOpenDashboard }) {

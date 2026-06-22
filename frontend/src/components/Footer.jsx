@@ -5,7 +5,7 @@ export default function Footer() {
     <footer className="site-footer">
       <div className="container footer-grid">
         <div>
-          <div className="brand footer-brand"><span className="brand-mark"><Sparkles size={18} /></span><span>TalentMax<small>HR Events</small></span></div>
+          <div className="brand footer-brand"><span className="brand-mark"><Sparkles size={18} /></span><span>EventMax</span></div>
           <p>Building India’s most thoughtful people-leadership community, one meaningful room at a time.</p>
         </div>
         <div><h4>Explore</h4><a href="/about">About us</a><a href="/events">Events</a><a href="/cities">Cities</a><a href="/portfolio">Our story</a><a href="/gallery">Gallery</a></div>

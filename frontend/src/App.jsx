@@ -7,6 +7,7 @@ import PortfolioDetailPage from "./PortfolioDetailPage.jsx";
 import GalleryPage from "./GalleryPage.jsx";
 import CitiesPage from "./CitiesPage.jsx";
 import AboutPage from "./AboutPage.jsx";
+import WhatsAppButton from "./components/WhatsAppButton.jsx";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
         <Route path="/destinations" element={<HomePage initialSection="destinations" />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      <WhatsAppButton />
     </BrowserRouter>
   );
 }
