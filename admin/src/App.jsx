@@ -407,8 +407,8 @@ function Sidebar({ active, onChange, open, onClose }) {
   return (
     <>
       <div className={`fixed inset-0 z-40 bg-black/50 lg:hidden ${open ? "block" : "hidden"}`} onClick={onClose} />
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 border-r border-white/10 bg-[#091b30] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex h-full flex-col">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 overflow-hidden border-r border-white/10 bg-[#091b30] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex h-full min-h-0 flex-col">
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
             <div>
               <div className="font-display text-xl font-extrabold text-[#f4c842]">TalentMax</div>
@@ -416,7 +416,7 @@ function Sidebar({ active, onChange, open, onClose }) {
             </div>
             <button className="lg:hidden" onClick={onClose}><X size={20} /></button>
           </div>
-          <nav className="flex-1 space-y-1 px-3 py-5">
+          <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {navItems.map((item) => {
               const Icon = item.icon;
               const selected = active === item.id;

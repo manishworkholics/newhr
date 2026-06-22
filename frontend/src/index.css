@@ -47,6 +47,7 @@ img { max-width: 100%; }
 .desktop-nav { display: flex; align-items: center; gap: 23px; margin-left: auto; }
 .desktop-nav button, .dashboard-link { border: 0; background: none; color: #5d5970; font-size: 13px; font-weight: 600; padding: 10px 0; transition: .2s; }
 .desktop-nav button:hover, .dashboard-link:hover { color: var(--primary); }
+.desktop-nav button.active { color: var(--primary); box-shadow: inset 0 -2px 0 var(--primary); }
 .nav-actions { display: flex; align-items: center; gap: 20px; }
 .menu-toggle { display: none; border: 0; background: transparent; color: var(--heading); }
 .mobile-nav { display: none; }
@@ -510,7 +511,8 @@ img { max-width: 100%; }
   .nav-actions { display: none; }
   .menu-toggle { display: block; }
   .mobile-nav { display: flex; position: fixed; z-index: 49; inset: 68px 0 auto; flex-direction: column; gap: 3px; padding: 20px; border-bottom: 1px solid var(--border); background: rgba(255,255,255,.97); box-shadow: var(--shadow-soft); }
-  .mobile-nav > button:not(.btn) { padding: 12px; border: 0; text-align: left; color: var(--heading); background: transparent; text-transform: capitalize; font-weight: 600; }
+  .mobile-nav > button:not(.btn) { padding: 12px; border: 0; border-radius: 12px; text-align: left; color: var(--heading); background: transparent; text-transform: capitalize; font-weight: 600; }
+  .mobile-nav > button.active:not(.btn) { color: var(--primary); background: #f1eafb; }
   .hero { padding-top: 120px; }
   .hero h1 { font-size: 42px; }
   .hero-copy > p { font-size: 15px; }
