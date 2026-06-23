@@ -32,7 +32,7 @@ export default function Header({ onOpenRegister, onOpenDashboard }) {
           <button onClick={() => go("cities")}>Cities</button>
           <button onClick={() => go("portfolio")}>Our story</button>
           <button onClick={() => go("gallery")}>Gallery</button>
-          <button onClick={() => go("sponsors")}>Partners</button>
+          <button onClick={() => go("partners")}>Partners</button>
         </div>
         <div className="nav-actions">
           <button className="btn btn-primary btn-small" onClick={onOpenRegister}>Request invite <ArrowUpRight size={15} /></button>

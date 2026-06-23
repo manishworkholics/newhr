@@ -481,7 +481,7 @@ function CompanyLogoSlider({ companyLogos }) {
   const repeatedLogos = [...logoGroup, ...logoGroup];
 
   return (
-    <section className="company-logo-section" aria-label="Our Partners">
+    <section className="company-logo-section" aria-label="Our Partners" id="e">
       <div className="container">
         <h2>Our Partners</h2>
       </div>
