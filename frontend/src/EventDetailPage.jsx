@@ -72,7 +72,6 @@ export default function EventDetailPage() {
               <div className="event-detail-heading">
                 {event.badge && <span className="detail-badge">{event.badge}</span>}
                 <h1>{event.title}</h1>
-                <p>{event.subtitle}</p>
               </div>
             </div>
           </div>
@@ -88,7 +87,7 @@ export default function EventDetailPage() {
               </p>
 
               <div className="detail-section">
-                <h3>Strategic objectives & inclusions</h3>
+                <h3>Our Offerings (Services Provided)</h3>
                 <div className="detail-list">
                   {(event.details || []).map((detail) => (
                     <div key={detail}><CheckCircle2 size={19} /><span>{detail}</span></div>

@@ -53,9 +53,7 @@ export default function CitiesPage() {
                   {city.image ? <img src={city.image} alt={city.landmark || city.name} /> : <div className="city-image-fallback"><MapPin size={34} /></div>}
                 </div>
                 <div className="city-showcase-body">
-                  <span className="city-era">{city.historicalEra}</span>
                   <h3><MapPin size={16} /> {city.name}</h3>
-                  <small>Historic {city.landmark}</small>
                   <p>{city.historicalInsight}</p>
                 </div>
               </article>

@@ -6,6 +6,8 @@ import cmsRoutes from "./cms.routes.js";
 import uploadRoutes from "./upload.routes.js";
 import passRoutes from "./pass.routes.js";
 import companyLogoRoutes from "./companyLogo.routes.js";
+import aboutRoutes from "./about.routes.js";
+import communityRoutes from "./community.routes.js";
 
 const router = Router();
 
@@ -16,5 +18,7 @@ router.use("/cms", cmsRoutes);
 router.use("/uploads", uploadRoutes);
 router.use("/passes", passRoutes);
 router.use("/", companyLogoRoutes);
+router.use("/v1/about", aboutRoutes);
+router.use("/v1/community", communityRoutes);
 
 export default router;

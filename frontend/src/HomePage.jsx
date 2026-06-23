@@ -295,7 +295,6 @@ export default function HomePage({ initialSection }) {
         </section>
         <section className="section city-showcase">
           <div className="container city-showcase-heading">
-            <div className="section-kicker"><Globe2 size={14} /> Cultural heritage &amp; enterprise metropolises</div>
             <h2 className="section-title">Our {cms.cityDetails.length} Summit Cities &amp;<br />Their Historical Legacies</h2>
             <p>
               Every city on the TalentMax Roadshow is a unique tapestry of historic wonders and dynamic corporate
@@ -310,9 +309,7 @@ export default function HomePage({ initialSection }) {
                   {city.image ? <img src={city.image} alt={city.landmark || city.name} /> : <div className="city-image-fallback"><MapPin size={34} /></div>}
                 </div>
                 <div className="city-showcase-body">
-                  <span className="city-era">{city.historicalEra}</span>
                   <h3><MapPin size={16} /> {city.name}</h3>
-                  <small>Historic {city.landmark}</small>
                   <p>{city.historicalInsight}</p>
                 </div>
               </article>

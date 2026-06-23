@@ -38,6 +38,7 @@ import {
 } from "ckeditor5";
 import "ckeditor5/ckeditor5.css";
 import { apiRequest, uploadImage } from "./api";
+import AboutAdmin from "./AboutAdmin";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -74,12 +75,18 @@ const emptyRoadshow = {
 };
 
 const emptyAbout = {
-  badge: "",
-  title: "",
-  subtitle: "",
-  heroImage: "",
-  content: "",
-  status: "Published"
+  heroTitle: "About EventMax",
+  heroDescription: "",
+  story: "",
+  vision: "",
+  mission: "",
+  aboutImage: "",
+  stats: {
+    events: 0,
+    clients: 0,
+    partners: 0,
+    years: 0
+  }
 };
 
 export default function App() {
@@ -108,14 +115,15 @@ export default function App() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [cms, inquiryData, passData, companyLogoData] = await Promise.all([
+      const [cms, inquiryData, passData, companyLogoData, aboutData] = await Promise.all([
         apiRequest("/cms"),
         apiRequest("/inquiries"),
         apiRequest("/passes"),
-        apiRequest("/admin/company-logos")
+        apiRequest("/admin/company-logos"),
+        apiRequest("/v1/about")
       ]);
       setRoadshow(cms.roadshow || emptyRoadshow);
-      setAbout(cms.about || emptyAbout);
+      setAbout({ ...emptyAbout, ...(aboutData.about || {}), stats: { ...emptyAbout.stats, ...(aboutData.about?.stats || {}) } });
       setEvents(cms.events || []);
       setUpcomingEvents(cms.upcomingEvents || []);
       setCities(cms.cities || []);
@@ -152,8 +160,8 @@ export default function App() {
   const saveAbout = async () => {
     setSaving(true);
     try {
-      const data = await apiRequest("/cms/about", {
-        method: "PUT",
+      const data = await apiRequest(about.id ? `/v1/about/${about.id}` : "/v1/about", {
+        method: about.id ? "PUT" : "POST",
         body: JSON.stringify(about)
       });
       setAbout(data.about);
@@ -363,7 +371,7 @@ export default function App() {
                 <RoadshowForm roadshow={roadshow} setRoadshow={setRoadshow} onSave={saveRoadshow} saving={saving} />
               )}
               {active === "about" && (
-                <AboutPageForm about={about} setAbout={setAbout} onSave={saveAbout} saving={saving} />
+                <AboutAdmin about={about} setAbout={setAbout} onSave={saveAbout} saving={saving} />
               )}
               {active === "events" && (
                 <EventGrid events={events} onEdit={setEditor} onDelete={(id) => deleteRecord("event", id)} />
@@ -407,8 +415,8 @@ function Sidebar({ active, onChange, open, onClose }) {
   return (
     <>
       <div className={`fixed inset-0 z-40 bg-black/50 lg:hidden ${open ? "block" : "hidden"}`} onClick={onClose} />
-      <aside className={`fixed inset-y-0 left-0 z-50 w-72 border-r border-white/10 bg-[#091b30] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
-        <div className="flex h-full flex-col">
+      <aside className={`fixed inset-y-0 left-0 z-50 w-72 overflow-hidden border-r border-white/10 bg-[#091b30] transition-transform lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+        <div className="flex h-full min-h-0 flex-col">
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
             <div>
               <div className="font-display text-xl font-extrabold text-[#f4c842]">TalentMax</div>
@@ -416,7 +424,7 @@ function Sidebar({ active, onChange, open, onClose }) {
             </div>
             <button className="lg:hidden" onClick={onClose}><X size={20} /></button>
           </div>
-          <nav className="flex-1 space-y-1 px-3 py-5">
+          <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto px-3 py-5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {navItems.map((item) => {
               const Icon = item.icon;
               const selected = active === item.id;
