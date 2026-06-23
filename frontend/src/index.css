@@ -214,6 +214,8 @@ img { max-width: 100%; }
 .about-page-content ul, .about-page-content ol { display: grid; gap: 10px; padding-left: 24px; }
 .about-page-content a { color: var(--primary); font-weight: 700; }
 .about-page-content blockquote { margin: 42px 0; padding: 30px 34px; border-left: 4px solid var(--primary); border-radius: 0 18px 18px 0; color: var(--heading); background: #f1e8fb; font: 600 22px/1.55 "Poppins"; }
+@keyframes skeleton-sweep { to { transform: translateX(100%); } }
+.about-page-content > *:first-child { margin-top: 0; }
 
 .timeline-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 .timeline-card { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 22px; background: white; box-shadow: var(--shadow-soft); cursor: pointer; transition: .25s; }

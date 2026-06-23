@@ -38,6 +38,7 @@ import {
 } from "ckeditor5";
 import "ckeditor5/ckeditor5.css";
 import { apiRequest, uploadImage } from "./api";
+import AboutAdmin from "./AboutAdmin";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -74,12 +75,18 @@ const emptyRoadshow = {
 };
 
 const emptyAbout = {
-  badge: "",
-  title: "",
-  subtitle: "",
-  heroImage: "",
-  content: "",
-  status: "Published"
+  heroTitle: "About EventMax",
+  heroDescription: "",
+  story: "",
+  vision: "",
+  mission: "",
+  aboutImage: "",
+  stats: {
+    events: 0,
+    clients: 0,
+    partners: 0,
+    years: 0
+  }
 };
 
 export default function App() {
@@ -108,14 +115,15 @@ export default function App() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [cms, inquiryData, passData, companyLogoData] = await Promise.all([
+      const [cms, inquiryData, passData, companyLogoData, aboutData] = await Promise.all([
         apiRequest("/cms"),
         apiRequest("/inquiries"),
         apiRequest("/passes"),
-        apiRequest("/admin/company-logos")
+        apiRequest("/admin/company-logos"),
+        apiRequest("/v1/about")
       ]);
       setRoadshow(cms.roadshow || emptyRoadshow);
-      setAbout(cms.about || emptyAbout);
+      setAbout({ ...emptyAbout, ...(aboutData.about || {}), stats: { ...emptyAbout.stats, ...(aboutData.about?.stats || {}) } });
       setEvents(cms.events || []);
       setUpcomingEvents(cms.upcomingEvents || []);
       setCities(cms.cities || []);
@@ -152,8 +160,8 @@ export default function App() {
   const saveAbout = async () => {
     setSaving(true);
     try {
-      const data = await apiRequest("/cms/about", {
-        method: "PUT",
+      const data = await apiRequest(about.id ? `/v1/about/${about.id}` : "/v1/about", {
+        method: about.id ? "PUT" : "POST",
         body: JSON.stringify(about)
       });
       setAbout(data.about);
@@ -363,7 +371,7 @@ export default function App() {
                 <RoadshowForm roadshow={roadshow} setRoadshow={setRoadshow} onSave={saveRoadshow} saving={saving} />
               )}
               {active === "about" && (
-                <AboutPageForm about={about} setAbout={setAbout} onSave={saveAbout} saving={saving} />
+                <AboutAdmin about={about} setAbout={setAbout} onSave={saveAbout} saving={saving} />
               )}
               {active === "events" && (
                 <EventGrid events={events} onEdit={setEditor} onDelete={(id) => deleteRecord("event", id)} />

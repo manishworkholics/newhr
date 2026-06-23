@@ -156,7 +156,7 @@ export default function Header({ onOpenRegister, onOpenDashboard }) {
             </button>
           ))}
           <button onClick={() => { onOpenDashboard(); setMobileMenuOpen(false); }}>Organizer login</button>
-          <button className="btn btn-primary" onClick={() => { onOpenRegister(); setMobileMenuOpen(false); }}>Request invite</button>
+          <button className="btn btn-primary" onClick={() => openRegistration()}>Request invite</button>
         </div>
       )}
     </header>
