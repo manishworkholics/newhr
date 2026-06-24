@@ -1,31 +1,132 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
   ArrowLeft,
-  Building2,
-  GraduationCap,
   Briefcase,
-  MapPin,
   CheckCircle2,
-  Sparkles
+  GraduationCap,
+  Landmark,
+  Loader2,
+  MapPin,
+  Sparkles,
+  TrendingUp
 } from "lucide-react";
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
-import { CITIES } from "./data/cities";
+import { apiRequest, resolveApiAssetUrl } from "./api";
 
 export default function CityDetailPage() {
-  const { citySlug } = useParams();
+  const { slug } = useParams();
+  const [city, setCity] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [notFound, setNotFound] = useState(false);
 
-  const city = useMemo(() => {
-    return CITIES.find(
-      (item) =>
-        item.slug === citySlug ||
-        String(item.id) === citySlug
+  useEffect(() => {
+    let mounted = true;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    setLoading(true);
+    setNotFound(false);
+
+    apiRequest(`/cities/${slug}`)
+      .then((data) => {
+        if (mounted) setCity(data.city);
+      })
+      .catch(async () => {
+        try {
+          const data = await apiRequest("/cms");
+          const city = data.cities?.find((item) => {
+            const citySlug = item.slug || slugify(item.cityName || item.name);
+            return citySlug === slug;
+          });
+          if (city) {
+            if (mounted) setCity(city);
+            return;
+          }
+        } catch {
+          // Fall through to the not-found state below.
+        }
+        if (mounted) setNotFound(true);
+      })
+      .finally(() => {
+        if (mounted) setLoading(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [slug]);
+
+  const displayCity = useMemo(() => {
+    if (!city) return null;
+    const name = city.cityName || city.name || "City";
+    return {
+      ...city,
+      name,
+      cityTagline: city.cityTagline || `${name} business ecosystem`,
+      shortDescription:
+        city.shortDescription ||
+        city.historicalInsight ||
+        `Explore ${name}'s enterprise, education and networking strengths.`,
+      aboutTitle: city.aboutTitle || `A focused ecosystem for ${name}`,
+      aboutDescription:
+        city.aboutDescription ||
+        city.historicalInsight ||
+        `${name} brings heritage, talent, institutions and business opportunity into one high-potential destination.`,
+      cityHighlights:
+        city.cityHighlights?.length
+          ? city.cityHighlights
+          : [city.landmark, city.historicalEra, "Business networking ecosystem"].filter(Boolean),
+      featureCards:
+        city.featureCards?.length
+          ? city.featureCards
+          : [
+              { title: "Education & Talent", description: "A strong base of institutions, graduates and professional communities." },
+              { title: "Business Momentum", description: "Enterprise conversations supported by local industry and service networks." },
+              { title: "Cultural Strength", description: "A distinctive city story that gives every gathering local relevance." }
+            ],
+      sidebarTitle: city.sidebarTitle || `Discover ${name}`,
+      sidebarDescription:
+        city.sidebarDescription ||
+        "Explore a city that combines heritage, innovation and business opportunities.",
+      stats:
+        city.stats?.length
+          ? city.stats
+          : [
+              { label: "Business Network", value: "Growing" },
+              { label: "Talent Access", value: "Strong" },
+              { label: "City Legacy", value: "Rich" }
+            ]
+    };
+  }, [city]);
+
+  if (loading) {
+    return (
+      <div className="site-shell">
+        <Header />
+
+        <main className="city-detail-page">
+          <section className="city-detail-skeleton container">
+            <div className="skeleton-hero" />
+            <div className="city-detail-grid">
+              <div className="skeleton-lines">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="skeleton-card">
+                <Loader2 className="animate-spin" size={22} />
+              </div>
+            </div>
+          </section>
+        </main>
+
+        <Footer />
+      </div>
     );
-  }, [citySlug]);
+  }
 
-  if (!city) {
+  if (notFound || !displayCity) {
     return (
       <div className="site-shell">
         <Header />
@@ -48,10 +149,9 @@ export default function CityDetailPage() {
     <div className="site-shell">
       <Header />
 
-      <main className="event-detail-page">
+      <main className="city-detail-page">
 
-        {/* Hero */}
-        <section className="event-detail-hero">
+        <section className="city-detail-hero">
           <div className="container">
 
             <Link className="detail-back" to="/cities">
@@ -59,166 +159,117 @@ export default function CityDetailPage() {
               All Cities
             </Link>
 
-            <div className="event-detail-image">
-              <img src={city.image} alt={city.name} />
+            <div className="city-hero-media">
+              {displayCity.image ? (
+                <img src={resolveApiAssetUrl(displayCity.image)} alt={displayCity.name} />
+              ) : (
+                <div className="city-hero-fallback"><MapPin size={54} /></div>
+              )}
 
-              <div className="event-detail-overlay" />
+              <div className="city-hero-overlay" />
 
-              <div className="event-detail-heading">
+              <div className="city-hero-heading">
                 <span className="detail-badge">
-                  Featured City
+                  EventMax City Guide
                 </span>
 
-                <h1>{city.name}</h1>
+                <h1>{displayCity.name}</h1>
+                <p>{displayCity.cityTagline}</p>
+                <small>{displayCity.shortDescription}</small>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Content */}
-        <section className="event-detail-content section">
-          <div className="container detail-layout">
+        <section className="city-detail-content section">
+          <div className="container city-detail-grid">
 
-            <div className="detail-main">
+            <div className="city-detail-main">
 
               <div className="section-kicker">
-                About The City
+                About This City
               </div>
 
               <h2 className="section-title">
-                Why {city.name} Matters
+                {displayCity.aboutTitle}
               </h2>
 
               <p className="detail-intro">
-                {city.description}
+                {displayCity.aboutDescription}
               </p>
 
-              {/* Highlights */}
+              <section className="city-info-section">
+                <h3>What Makes This City Special</h3>
 
-              <div className="detail-section">
-                <h3>City Highlights</h3>
-
-                <div className="detail-list">
-                  {city.highlights?.map((item) => (
+                <div className="city-highlight-list">
+                  {displayCity.cityHighlights.map((item) => (
                     <div key={item}>
                       <CheckCircle2 size={18} />
                       <span>{item}</span>
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
 
-              {/* Industries */}
+              <section className="city-feature-grid">
+                {displayCity.featureCards.slice(0, 3).map((feature, index) => {
+                  const icons = [GraduationCap, TrendingUp, Briefcase];
+                  const Icon = icons[index] || Sparkles;
+                  return (
+                    <article key={`${feature.title}-${index}`}>
+                      <span>
+                        <Icon size={19} />
+                      </span>
+                      <h3>{feature.title}</h3>
+                      <p>{feature.description}</p>
+                    </article>
+                  );
+                })}
+              </section>
 
-              <div className="detail-benefit-grid">
+              <section className="city-legacy-card">
+                <div>
+                  <span className="section-kicker">Historical Legacy</span>
+                  <h3>{displayCity.historicalEra || "A city with a distinct legacy"}</h3>
+                </div>
+                <p>{displayCity.historicalInsight}</p>
+              </section>
 
-                <article>
-                  <span>
-                    <Briefcase />
-                  </span>
-
-                  <h3>Top Industries</h3>
-
-                  <ul>
-                    {city.industries?.map((industry) => (
-                      <li key={industry}>
-                        {industry}
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-
-                <article>
-                  <span>
-                    <GraduationCap />
-                  </span>
-
-                  <h3>Top Colleges</h3>
-
-                  <ul>
-                    {city.colleges?.map((college) => (
-                      <li key={college}>
-                        {college}
-                      </li>
-                    ))}
-                  </ul>
-                </article>
-
-                <article>
-                  <span>
-                    <Building2 />
-                  </span>
-
-                  <h3>Business Ecosystem</h3>
-
-                  <p>
-                    Strong presence of IT,
-                    education and startup ecosystem.
-                  </p>
-                </article>
-
-              </div>
+              <section className="city-network-card">
+                <span><Sparkles size={18} /></span>
+                <div>
+                  <h3>Business & Networking Vibe</h3>
+                  <p>{displayCity.networkingVibe}</p>
+                </div>
+              </section>
 
             </div>
 
-            {/* Sidebar */}
+            <aside className="city-detail-sidebar">
 
-            <aside className="detail-sidebar">
-
-              <div className="detail-cta-card">
+              <div className="city-sidebar-card">
 
                 <span className="cta-icon">
-                  <Sparkles />
+                  <Landmark />
                 </span>
 
-                <small>City Overview</small>
+                <small>Destination Overview</small>
 
-                <h2>{city.name}</h2>
+                <h2>{displayCity.sidebarTitle}</h2>
 
                 <p>
-                  Explore educational,
-                  industrial and career
-                  opportunities available
-                  in this city.
+                  {displayCity.sidebarDescription}
                 </p>
 
               </div>
 
-              <div className="detail-meta-card">
-
-                <div>
-                  <MapPin />
-
-                  <span>
-                    <small>Location</small>
-                    <strong>
-                      Madhya Pradesh
-                    </strong>
-                  </span>
-                </div>
-
-                <div>
-                  <GraduationCap />
-
-                  <span>
-                    <small>Education</small>
-                    <strong>
-                      Top Universities
-                    </strong>
-                  </span>
-                </div>
-
-                <div>
-                  <Briefcase />
-
-                  <span>
-                    <small>Employment</small>
-                    <strong>
-                      Growing Opportunities
-                    </strong>
-                  </span>
-                </div>
-
+              <div className="city-stat-card">
+                {displayCity.stats.map((stat, index) => (
+                  <div key={`${stat.label}-${index}`}>
+                    <small>{stat.label}</small>
+                    <strong>{stat.value}</strong>
+                  </div>
+                ))}
               </div>
 
             </aside>
@@ -231,4 +282,8 @@ export default function CityDetailPage() {
       <Footer />
     </div>
   );
+}
+
+function slugify(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }

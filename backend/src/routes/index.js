@@ -8,6 +8,10 @@ import passRoutes from "./pass.routes.js";
 import companyLogoRoutes from "./companyLogo.routes.js";
 import aboutRoutes from "./about.routes.js";
 import communityRoutes from "./community.routes.js";
+import cityRoutes from "./city.routes.js";
+import journeyRoutes from "./journey.routes.js";
+import adminAuthRoutes from "./adminAuth.routes.js";
+import { requireAdminAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -15,8 +19,12 @@ router.use("/health", healthRoutes);
 router.use("/inquiries", inquiryRoutes);
 router.use("/pitch", pitchRoutes);
 router.use("/cms", cmsRoutes);
-router.use("/uploads", uploadRoutes);
-router.use("/passes", passRoutes);
+router.use("/cities", cityRoutes);
+router.use("/admin/auth", adminAuthRoutes);
+router.use("/admin/cities", requireAdminAuth, cityRoutes);
+router.use("/", journeyRoutes);
+router.use("/uploads", requireAdminAuth, uploadRoutes);
+router.use("/passes", requireAdminAuth, passRoutes);
 router.use("/", companyLogoRoutes);
 router.use("/v1/about", aboutRoutes);
 router.use("/v1/community", communityRoutes);

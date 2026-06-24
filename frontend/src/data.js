@@ -1,7 +1,7 @@
 export const STATS = [
   { value: "30+", label: "Successful Events" },
   { value: "10,000+", label: "Professional Reach" },
-  { value: "500+", label: "HR Leaders Connected" },
+  { value: "5000+", label: "HR Leaders Connected" },
   { value: "All Major", label: "Cities Across India" }
 ];
 

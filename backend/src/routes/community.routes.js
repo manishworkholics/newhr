@@ -5,12 +5,13 @@ import {
   registerCommunityMember,
   updateCommunityStatus
 } from "../controllers/community.controller.js";
+import { requireAdminAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
 router.post("/register", registerCommunityMember);
-router.get("/", getCommunityRegistrations);
-router.put("/:id/status", updateCommunityStatus);
-router.delete("/:id", deleteCommunityRegistration);
+router.get("/", requireAdminAuth, getCommunityRegistrations);
+router.put("/:id/status", requireAdminAuth, updateCommunityStatus);
+router.delete("/:id", requireAdminAuth, deleteCommunityRegistration);
 
 export default router;

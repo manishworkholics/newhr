@@ -121,11 +121,33 @@ const cityNames = [
 
 export const defaultCities = cityNames.map((name, index) => ({
   name,
+  cityName: name,
   landmark: name,
+  cityTagline: `${name} enterprise and networking destination`,
+  shortDescription: `${name} is part of the EventMax city network for high-value business, talent and leadership conversations.`,
+  aboutTitle: `A focused ecosystem for ${name}`,
+  aboutDescription: `${name} combines local heritage, institutional depth and business momentum for curated professional gatherings.`,
   historicalEra: "Historical Enterprise Hub",
   image: "",
   historicalInsight: `${name} is part of the TalentMax roadshow network for high-value HR and business networking.`,
   networkingVibe: "A strategic business destination for HR leaders, sponsors, consultants, and enterprise partners.",
+  cityHighlights: [
+    "Enterprise community",
+    "Professional talent base",
+    "Business networking ecosystem"
+  ],
+  featureCards: [
+    { title: "Education & Talent", description: "A strong base of institutions, graduates and professional communities." },
+    { title: "Business Momentum", description: "Enterprise conversations supported by local industry and service networks." },
+    { title: "Cultural Strength", description: "A distinctive city story that gives every gathering local relevance." }
+  ],
+  sidebarTitle: `Discover ${name}`,
+  sidebarDescription: "Explore a city that combines heritage, innovation and business opportunities.",
+  stats: [
+    { label: "Business Network", value: "Growing" },
+    { label: "Talent Access", value: "Strong" },
+    { label: "City Legacy", value: "Rich" }
+  ],
   sortOrder: index + 1
 }));
 
@@ -156,6 +178,51 @@ export const defaultGallery = [
     year: "2024",
     image: "https://images.unsplash.com/photo-1515169067868-5387ec356754?auto=format&fit=crop&w=1400&q=85",
     sortOrder: 3
+  }
+];
+
+export const defaultJourney = [
+  {
+    year: 2024,
+    title: "Highlights",
+    shortDescription: "Founding year. Key meet-ups launch for HR professionals, Accountants, Purchase Managers, and creators designed to bridge organizational divisions in tier-1/tier-2 hubs.",
+    image: "https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=85",
+    milestones: [
+      { title: "HR Meet-Up", month: "May" },
+      { title: "Accountant Meet-Up", month: "July" },
+      { title: "Purchase Manager Meet-Up", month: "August" },
+      { title: "LinkedIn Influencer Meet", month: "September" }
+    ],
+    displayOrder: 1,
+    isPublished: true
+  },
+  {
+    year: 2025,
+    title: "Rapid Expansion",
+    shortDescription: "Strategic partnerships established with Zoho and Niyuk. Formulated the multi-city HR Conclave format, successfully hosting over 500+ leaders in a collaborative physical setting.",
+    image: "https://images.unsplash.com/photo-1505373877841-8d25f7d46678?auto=format&fit=crop&w=1200&q=85",
+    milestones: [
+      { title: "HR Meet-Up", month: "February" },
+      { title: "HR Conclave", month: "June/July" },
+      { title: "Zoho Partnership Events", month: "October" },
+      { title: "Niyuk & LinkedIn", month: "November/December" }
+    ],
+    displayOrder: 2,
+    isPublished: true
+  },
+  {
+    year: 2026,
+    title: "Future Scale",
+    shortDescription: "Launching the ambitious HR Connect India Pan-India Roadshow aiming to cross 12 cities and gather 1,500+ professionals under a shared standard VIP network ecosystem.",
+    image: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1200&q=85",
+    milestones: [
+      { title: "Job Fair", month: "February" },
+      { title: "ESG Industry Events", month: "March" },
+      { title: "Automate 360", month: "March" },
+      { title: "HR Connect India Launch", month: "July" }
+    ],
+    displayOrder: 3,
+    isPublished: true
   }
 ];
 

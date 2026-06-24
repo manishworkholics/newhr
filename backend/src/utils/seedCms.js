@@ -4,16 +4,18 @@ import { GalleryImage } from "../models/GalleryImage.js";
 import { Roadshow } from "../models/Roadshow.js";
 import { AboutPage } from "../models/AboutPage.js";
 import { Testimonial } from "../models/Testimonial.js";
-import { defaultAboutPage, defaultCities, defaultEvents, defaultGallery, defaultRoadshow, defaultTestimonials } from "../data/defaultCms.js";
+import { Journey } from "../models/Journey.js";
+import { defaultAboutPage, defaultCities, defaultEvents, defaultGallery, defaultJourney, defaultRoadshow, defaultTestimonials } from "../data/defaultCms.js";
 
 export async function seedCmsIfEmpty() {
-  const [roadshowCount, eventCount, cityCount, galleryCount, aboutCount, testimonialCount] = await Promise.all([
+  const [roadshowCount, eventCount, cityCount, galleryCount, aboutCount, testimonialCount, journeyCount] = await Promise.all([
     Roadshow.countDocuments(),
     Event.countDocuments(),
     City.countDocuments(),
     GalleryImage.countDocuments(),
     AboutPage.countDocuments(),
-    Testimonial.countDocuments()
+    Testimonial.countDocuments(),
+    Journey.countDocuments()
   ]);
 
   if (!roadshowCount) {
@@ -46,5 +48,9 @@ export async function seedCmsIfEmpty() {
 
   if (!testimonialCount) {
     await Testimonial.insertMany(defaultTestimonials);
+  }
+
+  if (!journeyCount) {
+    await Journey.insertMany(defaultJourney);
   }
 }

@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { Globe2, MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { MapPin } from "lucide-react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AIPitchGenerator from "./components/AIPitchGenerator";
 import InquiryDashboard from "./components/InquiryDashboard";
-import { apiRequest } from "./api";
+import { apiRequest, resolveApiAssetUrl } from "./api";
 
 export default function CitiesPage() {
+  const navigate = useNavigate();
   const [cms, setCms] = useState({ cityDetails: [] });
   const [registerOpen, setRegisterOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
@@ -49,15 +51,15 @@ export default function CitiesPage() {
             {cms.cityDetails.map((city) => (
               <article
                 className="city-showcase-card cursor-pointer transition hover:-translate-y-1"
-                key={city.id || city.name}
-                onClick={() => openCityModal(city)}
+                key={city.id || city.name || city.cityName}
+                onClick={() => navigate(`/cities/${city.slug || slugify(city.cityName || city.name)}`)}
               >
                 <div className="city-showcase-image">
-                  {city.image ? <img src={city.image} alt={city.landmark || city.name} /> : <div className="city-image-fallback"><MapPin size={34} /></div>}
+                  {city.image ? <img src={resolveApiAssetUrl(city.image)} alt={city.landmark || city.cityName || city.name} /> : <div className="city-image-fallback"><MapPin size={34} /></div>}
                 </div>
                 <div className="city-showcase-body">
-                  <h3><MapPin size={16} /> {city.name}</h3>
-                  <p>{city.historicalInsight}</p>
+                  <h3><MapPin size={16} /> {city.cityName || city.name}</h3>
+                  <p>{city.shortDescription || city.historicalInsight}</p>
                 </div>
               </article>
             ))}
@@ -77,4 +79,8 @@ export default function CitiesPage() {
       />
     </div>
   );
+}
+
+function slugify(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }
