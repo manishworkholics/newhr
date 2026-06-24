@@ -156,7 +156,7 @@ export default function HomePage({ initialSection }) {
               </p>
               <div className="hero-actions">
                 <button className="btn btn-primary" onClick={() => scrollToSection("events")}>
-                  Explore events <ArrowRight size={17} />
+                  Explore Services <ArrowRight size={17} />
                 </button>
                 <button className="btn btn-secondary" onClick={() => openRegistration()}>
                   <Ticket size={17} /> Request an invite
@@ -166,7 +166,7 @@ export default function HomePage({ initialSection }) {
                 <div className="avatars">
                   {["RS", "AK", "PM", "NS"].map((initials) => <span key={initials}>{initials}</span>)}
                 </div>
-                <div><strong>10,000+ professionals</strong><small>already in the TalentMax network</small></div>
+                <div><strong>10,000+ professionals</strong><small>already in the EventMax network</small></div>
               </div>
             </div>
 
@@ -177,7 +177,7 @@ export default function HomePage({ initialSection }) {
               </div>
               <div className="floating-card floating-date">
                 <span className="floating-icon"><CalendarDays size={20} /></span>
-                <div><small>Next flagship event</small><strong>HR Connect India</strong><span>July 2026 · 12 cities</span></div>
+                <div><small>Next flagship event</small><strong>Connect India</strong><span>July 2026 · 12 cities</span></div>
               </div>
               <div className="floating-card floating-rating">
                 <span className="rating-score">4.9</span>
@@ -275,7 +275,7 @@ export default function HomePage({ initialSection }) {
               <h2 className="section-title">Not another conference.<br />A room worth being in.</h2>
             </div>
             <div className="intro-copy">
-              <p>TalentMax brings the right people together in thoughtful formats that favor relevance over noise. Every agenda, room, and introduction is designed to make your time count.</p>
+              <p>Eventmax brings the right people together in thoughtful formats that favor relevance over noise. Every agenda, room, and introduction is designed to make your time count.</p>
               <div className="check-row"><CheckCircle2 /> Curated audiences, practical content, and warm hospitality.</div>
             </div>
           </div>
@@ -295,9 +295,9 @@ export default function HomePage({ initialSection }) {
         </section>
         <section className="section city-showcase">
           <div className="container city-showcase-heading">
-            <h2 className="section-title">Our {cms.cityDetails.length} Summit Cities &amp;<br />Their Historical Legacies</h2>
+            <h2 className="section-title">Our {cms.cityDetails.length} Summit Cities <br /></h2>
             <p>
-              Every city on the TalentMax Roadshow is a unique tapestry of historic wonders and dynamic corporate
+              Every city on the Eventmax Roadshow is a unique tapestry of historic wonders and dynamic corporate
               powerhouses. Select a city to pre-fill your VIP matchmaking credentials.
             </p>
           </div>
