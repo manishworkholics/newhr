@@ -20,7 +20,7 @@ export default function CitiesPage() {
           cityDetails: data.cities?.filter((city) => city.status !== "Draft") || []
         });
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const openRegistration = (city = "") => {
@@ -38,7 +38,6 @@ export default function CitiesPage() {
       <main className="cities-page">
         <section className="section city-showcase">
           <div className="container city-showcase-heading">
-            <div className="section-kicker"><Globe2 size={14} /> Cultural heritage &amp; enterprise metropolises</div>
             <h1 className="section-title">Our {cms.cityDetails.length} Summit Cities &amp;<br />Their Historical Legacies</h1>
             <p>
               Every city on the TalentMax Roadshow is a unique tapestry of historic wonders and dynamic corporate
@@ -48,7 +47,11 @@ export default function CitiesPage() {
 
           <div className="container city-showcase-grid">
             {cms.cityDetails.map((city) => (
-              <article className="city-showcase-card" key={city.id || city.name}>
+              <article
+                className="city-showcase-card cursor-pointer transition hover:-translate-y-1"
+                key={city.id || city.name}
+                onClick={() => openCityModal(city)}
+              >
                 <div className="city-showcase-image">
                   {city.image ? <img src={city.image} alt={city.landmark || city.name} /> : <div className="city-image-fallback"><MapPin size={34} /></div>}
                 </div>

@@ -10,7 +10,7 @@ import CompanyValues from "./components/CompanyValues";
 import StatsSection from "./components/StatsSection";
 import CommunityRegistrationModal from "./components/modals/CommunityRegistrationModal";
 import { apiRequest } from "./api";
-
+import AIPitchGenerator from "./components/AIPitchGenerator";
 const fallbackAbout = {
   heroTitle: "About EventMax",
   heroDescription: "EventMax creates premium business events, HR leadership forums, and curated networking experiences for ambitious professionals and brands.",
@@ -27,7 +27,7 @@ export default function AboutPage() {
   const [error, setError] = useState("");
   const [communityOpen, setCommunityOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
-
+  const [registerOpen, setRegisterOpen] = useState(false);
   useEffect(() => {
     window.scrollTo(0, 0);
     apiRequest("/v1/about")
@@ -40,7 +40,10 @@ export default function AboutPage() {
 
   return (
     <div className="site-shell">
-      <Header onOpenRegister={() => setCommunityOpen(true)} onOpenDashboard={() => setDashboardOpen(true)} />
+      <Header
+        onOpenRegister={() => setRegisterOpen(true)}
+        onOpenDashboard={() => setDashboardOpen(true)}
+      />
 
       <main className="pt-[78px] max-md:pt-[68px]">
         {loading ? (
@@ -93,6 +96,12 @@ export default function AboutPage() {
 
       <Footer />
       <CommunityRegistrationModal isOpen={communityOpen} onClose={() => setCommunityOpen(false)} />
+      <AIPitchGenerator
+        isOpen={registerOpen}
+        onClose={() => setRegisterOpen(false)}
+        preselectedProperty=""
+        preselectedCity=""
+      />
       <InquiryDashboard isOpen={dashboardOpen} onClose={() => setDashboardOpen(false)} />
     </div>
   );
