@@ -1,6 +1,11 @@
+import dns from "node:dns";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { AdminUser } from "../src/models/AdminUser.js";
+
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
+
+console.log("DNS:", dns.getServers());
 
 dotenv.config({ path: ".env", override: true });
 
@@ -21,7 +26,15 @@ if (!process.env.MONGODB_URI) {
   process.exit(1);
 }
 
-await mongoose.connect(process.env.MONGODB_URI);
+const records = await dns.promises.resolveSrv(
+  "_mongodb._tcp.cluster0.6vfzzbv.mongodb.net"
+);
+
+console.log("Mongo SRV OK:", records.length);
+
+await mongoose.connect(process.env.MONGODB_URI, {
+  serverSelectionTimeoutMS: 10000
+});
 
 const email = emailArg.toLowerCase().trim();
 const existing = await AdminUser.findOne({ email });

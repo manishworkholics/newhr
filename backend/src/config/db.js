@@ -1,4 +1,4 @@
-import dns from "dns";
+import dns from "node:dns";
 import mongoose from "mongoose";
 import { env } from "./env.js";
 
@@ -10,8 +10,23 @@ export async function connectDatabase() {
   }
 
   if (env.mongoUri.startsWith("mongodb+srv://")) {
+
     dns.setServers(srvDnsServers);
-    console.log("Using custom DNS servers for MongoDB SRV resolution:", srvDnsServers);
+
+    console.log("DNS Servers:", dns.getServers());
+
+    try {
+      const records = await dns.promises.resolveSrv(
+        "_mongodb._tcp.cluster0.6vfzzbv.mongodb.net"
+      );
+
+      console.log("SRV Records Found:");
+      console.log(records);
+
+    } catch (err) {
+      console.error("SRV Lookup Failed:", err);
+      throw err;
+    }
   }
 
   mongoose.set("strictQuery", true);
