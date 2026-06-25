@@ -22,7 +22,7 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AIPitchGenerator from "./components/AIPitchGenerator";
 import InquiryDashboard from "./components/InquiryDashboard";
-import { apiRequest } from "./api";
+import { apiRequest, resolveApiAssetUrl } from "./api";
 import { CITIES, CITY_DETAILS, PROPERTIES, STATS, TIMELINE, WHY_PARTNER } from "./data";
 import heroImage from "./assets/hr-conference-hero.jpg";
 
@@ -71,7 +71,8 @@ export default function HomePage({ initialSection }) {
     cities: CITIES,
     cityDetails: CITY_DETAILS,
     testimonials: [],
-    companyLogos: []
+    companyLogos: [],
+    journey: []
   });
 
   const scrollToSection = (id) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
@@ -83,8 +84,12 @@ export default function HomePage({ initialSection }) {
   }, [initialSection]);
 
   useEffect(() => {
-    Promise.all([apiRequest("/cms"), apiRequest("/company-logos")])
-      .then(([data, companyLogoData]) => {
+    Promise.allSettled([apiRequest("/cms"), apiRequest("/company-logos"), apiRequest("/journey")])
+      .then(([cmsResult, companyLogoResult, journeyResult]) => {
+        if (cmsResult.status !== "fulfilled") return;
+        const data = cmsResult.value;
+        const companyLogoData = companyLogoResult.status === "fulfilled" ? companyLogoResult.value : {};
+        const journeyData = journeyResult.status === "fulfilled" ? journeyResult.value : {};
         const publishedCities = data.cities?.filter((city) => city.status !== "Draft") || [];
         const cityDetails = publishedCities.map((city) => {
           const fallback = CITY_DETAILS.find((item) => item.name === city.name) || {};
@@ -93,7 +98,7 @@ export default function HomePage({ initialSection }) {
             ...city,
             landmark: city.landmark || fallback.landmark || city.name,
             historicalEra: city.historicalEra || fallback.historicalEra || "Enterprise Destination",
-            image: city.image || fallback.image || "",
+            image: resolveApiAssetUrl(city.image) || fallback.image || "",
             historicalInsight: city.historicalInsight || fallback.historicalInsight || "",
             networkingVibe: city.networkingVibe || fallback.networkingVibe || ""
           };
@@ -106,7 +111,8 @@ export default function HomePage({ initialSection }) {
           cities: cityDetails.length ? cityDetails.map((city) => city.name) : prev.cities,
           cityDetails: cityDetails.length ? cityDetails : prev.cityDetails,
           testimonials: data.testimonials?.filter((item) => item.status !== "Draft") || [],
-          companyLogos: companyLogoData.companyLogos || []
+          companyLogos: companyLogoData.companyLogos || prev.companyLogos,
+          journey: journeyData.journey || prev.journey
         }));
       })
       .catch(() => { });
@@ -117,6 +123,19 @@ export default function HomePage({ initialSection }) {
     setPreselectedCity(city);
     setIsRegisterOpen(true);
   };
+
+  const journeyEntries = cms.journey.length ? cms.journey : TIMELINE.map((item, index) => ({
+    id: `20${item.year}`,
+    year: Number(`20${item.year}`),
+    title: item.title.replace(/^\d{4}:?\s*/, ""),
+    shortDescription: item.description,
+    image: item.image,
+    milestones: item.highlights.map((highlight) => {
+      const match = highlight.match(/^(.*?)\s*\((.*?)\)$/);
+      return { title: match?.[1] || highlight, month: match?.[2] || "" };
+    }),
+    displayOrder: index + 1
+  }));
 
   const handlePartnerSubmit = async (event) => {
     event.preventDefault();
@@ -156,7 +175,7 @@ export default function HomePage({ initialSection }) {
               </p>
               <div className="hero-actions">
                 <button className="btn btn-primary" onClick={() => scrollToSection("events")}>
-                  Explore events <ArrowRight size={17} />
+                  Explore Services <ArrowRight size={17} />
                 </button>
                 <button className="btn btn-secondary" onClick={() => openRegistration()}>
                   <Ticket size={17} /> Request an invite
@@ -166,7 +185,7 @@ export default function HomePage({ initialSection }) {
                 <div className="avatars">
                   {["RS", "AK", "PM", "NS"].map((initials) => <span key={initials}>{initials}</span>)}
                 </div>
-                <div><strong>10,000+ professionals</strong><small>already in the TalentMax network</small></div>
+                <div><strong>10,000+ professionals</strong><small>already in the EventMax network</small></div>
               </div>
             </div>
 
@@ -177,7 +196,7 @@ export default function HomePage({ initialSection }) {
               </div>
               <div className="floating-card floating-date">
                 <span className="floating-icon"><CalendarDays size={20} /></span>
-                <div><small>Next flagship event</small><strong>HR Connect India</strong><span>July 2026 · 12 cities</span></div>
+                <div><small>Next flagship event</small><strong>Connect India</strong><span>July 2026 · 12 cities</span></div>
               </div>
               <div className="floating-card floating-rating">
                 <span className="rating-score">4.9</span>
@@ -275,7 +294,7 @@ export default function HomePage({ initialSection }) {
               <h2 className="section-title">Not another conference.<br />A room worth being in.</h2>
             </div>
             <div className="intro-copy">
-              <p>TalentMax brings the right people together in thoughtful formats that favor relevance over noise. Every agenda, room, and introduction is designed to make your time count.</p>
+              <p>Eventmax brings the right people together in thoughtful formats that favor relevance over noise. Every agenda, room, and introduction is designed to make your time count.</p>
               <div className="check-row"><CheckCircle2 /> Curated audiences, practical content, and warm hospitality.</div>
             </div>
           </div>
@@ -295,23 +314,26 @@ export default function HomePage({ initialSection }) {
         </section>
         <section className="section city-showcase">
           <div className="container city-showcase-heading">
-            <div className="section-kicker"><Globe2 size={14} /> Cultural heritage &amp; enterprise metropolises</div>
-            <h2 className="section-title">Our {cms.cityDetails.length} Summit Cities &amp;<br />Their Historical Legacies</h2>
+            <h2 className="section-title">Our {cms.cityDetails.length} Summit Cities <br /></h2>
             <p>
-              Every city on the TalentMax Roadshow is a unique tapestry of historic wonders and dynamic corporate
+              Every city on the Eventmax Roadshow is a unique tapestry of historic wonders and dynamic corporate
               powerhouses. Select a city to pre-fill your VIP matchmaking credentials.
             </p>
           </div>
 
           <div className="container city-showcase-grid">
             {cms.cityDetails.slice(0, 4).map((city) => (
-              <article className="city-showcase-card" key={city.id || city.name}>
+              <article
+                className="city-showcase-card cursor-pointer"
+                key={city.id || city.name || city.cityName}
+                onClick={() => navigate(`/cities/${city.slug || slugify(city.cityName || city.name)}`)}
+              >
                 <div className="city-showcase-image">
-                  {city.image ? <img src={city.image} alt={city.landmark || city.name} /> : <div className="city-image-fallback"><MapPin size={34} /></div>}
+                  {city.image ? <img src={resolveApiAssetUrl(city.image)} alt={city.landmark || city.cityName || city.name} /> : <div className="city-image-fallback"><MapPin size={34} /></div>}
                 </div>
                 <div className="city-showcase-body">
-                  <h3><MapPin size={16} /> {city.name}</h3>
-                  <p>{city.historicalInsight}</p>
+                  <h3><MapPin size={16} /> {city.cityName || city.name}</h3>
+                  <p>{city.shortDescription || city.historicalInsight}</p>
                 </div>
               </article>
             ))}
@@ -334,16 +356,16 @@ export default function HomePage({ initialSection }) {
             </button>
           </div>
           <div className="container timeline-grid">
-            {TIMELINE.map((item, index) => (
-              <article className="timeline-card" key={item.year} onClick={() => navigate(`/portfolio/20${item.year}`)}>
+            {journeyEntries.map((item, index) => (
+              <article className="timeline-card" key={item.id || item.year} onClick={() => navigate(`/portfolio/${item.year}`)}>
                 <div className="timeline-image">
-                  <img src={item.image || cms.properties[index]?.image || cms.properties[0]?.image} alt={item.title} />
-                  <span className="timeline-year">20{item.year}</span>
+                  <img src={resolveApiAssetUrl(item.image) || cms.properties[index]?.image || cms.properties[0]?.image} alt={item.title} />
+                  <span className="timeline-year">{item.year}</span>
                 </div>
                 <div className="timeline-body">
-                  <h3>{item.title.replace(/^\d{4}:?\s*/, "")}</h3>
-                  <p>{item.description}</p>
-                  <ul>{item.highlights.slice(0, 3).map((highlight) => <li key={highlight}><Check size={14} />{highlight}</li>)}</ul>
+                  <h3>{item.title}</h3>
+                  <p>{item.shortDescription}</p>
+                  <ul>{item.milestones?.slice(0, 3).map((milestone) => <li key={`${milestone.title}-${milestone.month}`}><Check size={14} />{milestone.month ? `${milestone.title} (${milestone.month})` : milestone.title}</li>)}</ul>
                   <span className="card-link">View year highlights <ArrowRight size={14} /></span>
                 </div>
               </article>
@@ -479,7 +501,7 @@ function CompanyLogoSlider({ companyLogos }) {
   const repeatedLogos = [...logoGroup, ...logoGroup];
 
   return (
-    <section className="company-logo-section" aria-label="Our Partners">
+    <section className="company-logo-section" aria-label="Our Partners" id="e">
       <div className="container">
         <h2>Our Partners</h2>
       </div>
@@ -494,4 +516,8 @@ function CompanyLogoSlider({ companyLogos }) {
       </div>
     </section>
   );
+}
+
+function slugify(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }

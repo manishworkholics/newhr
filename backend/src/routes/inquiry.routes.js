@@ -5,12 +5,13 @@ import {
   getInquiries,
   updateInquiryStatus
 } from "../controllers/inquiry.controller.js";
+import { requireAdminAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.get("/", getInquiries);
+router.get("/", requireAdminAuth, getInquiries);
 router.post("/", createInquiry);
-router.patch("/:id/status", updateInquiryStatus);
-router.delete("/:id", deleteInquiry);
+router.patch("/:id/status", requireAdminAuth, updateInquiryStatus);
+router.delete("/:id", requireAdminAuth, deleteInquiry);
 
 export default router;

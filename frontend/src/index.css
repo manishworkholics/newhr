@@ -45,7 +45,7 @@ img { max-width: 100%; }
 .brand small { display: block; margin-top: 5px; color: var(--muted); font: 700 8px/1 "Inter"; letter-spacing: .2em; text-transform: uppercase; }
 .brand-mark { width: 38px; height: 38px; display: grid; place-items: center; color: white; border-radius: 12px; background: linear-gradient(135deg, var(--primary), #b766e8); box-shadow: 0 8px 20px rgba(139,92,246,.25); }
 .desktop-nav { display: flex; align-items: center; gap: 23px; margin-left: auto; }
-.desktop-nav button, .dashboard-link { border: 0; background: none; color: #5d5970; font-size: 13px; font-weight: 600; padding: 10px 0; transition: .2s; }
+.desktop-nav button, .dashboard-link { border: 0; background: none; color: #5d5970; font-size: 15px; font-weight: 600; padding: 10px 0; transition: .2s; }
 .desktop-nav button:hover, .dashboard-link:hover { color: var(--primary); }
 .desktop-nav button.active { color: var(--primary); box-shadow: inset 0 -2px 0 var(--primary); }
 .nav-actions { display: flex; align-items: center; gap: 20px; }
@@ -214,6 +214,8 @@ img { max-width: 100%; }
 .about-page-content ul, .about-page-content ol { display: grid; gap: 10px; padding-left: 24px; }
 .about-page-content a { color: var(--primary); font-weight: 700; }
 .about-page-content blockquote { margin: 42px 0; padding: 30px 34px; border-left: 4px solid var(--primary); border-radius: 0 18px 18px 0; color: var(--heading); background: #f1e8fb; font: 600 22px/1.55 "Poppins"; }
+@keyframes skeleton-sweep { to { transform: translateX(100%); } }
+.about-page-content > *:first-child { margin-top: 0; }
 
 .timeline-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
 .timeline-card { position: relative; overflow: hidden; border: 1px solid var(--border); border-radius: 22px; background: white; box-shadow: var(--shadow-soft); cursor: pointer; transition: .25s; }
@@ -336,6 +338,56 @@ img { max-width: 100%; }
 .event-not-found { min-height: 72vh; display: flex; align-items: center; justify-content: center; flex-direction: column; padding-top: 140px; text-align: center; }
 .event-not-found h1 { margin: 20px 0 8px; color: var(--heading); font: 700 36px "Poppins"; }
 .event-not-found p { margin: 0 0 25px; color: var(--muted); }
+
+/* City detail page */
+.city-detail-page { padding-top: 78px; background: linear-gradient(180deg, #f6f0fb 0%, #fbf9fd 48%, #fff 100%); }
+.city-detail-hero { padding: 44px 0 0; }
+.city-hero-media { position: relative; height: 360px; overflow: hidden; border-radius: 22px; box-shadow: var(--shadow); background: linear-gradient(135deg, #d8c3f4, #f3eafd); }
+.city-hero-media > img { width: 100%; height: 100%; object-fit: cover; }
+.city-hero-fallback { height: 100%; display: grid; place-items: center; color: rgba(115,64,229,.65); }
+.city-hero-overlay { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(26,20,62,.9) 0%, rgba(39,30,83,.62) 46%, rgba(39,30,83,.12) 100%); }
+.city-hero-heading { position: absolute; z-index: 1; left: 7%; bottom: 12%; max-width: 710px; color: white; }
+.city-hero-heading h1 { max-width: 720px; margin: 18px 0 10px; font: 800 clamp(44px, 6vw, 76px)/1.02 "Poppins"; letter-spacing: -.04em; }
+.city-hero-heading p { margin: 0 0 13px; color: rgba(255,255,255,.92); font: 700 clamp(20px, 2.3vw, 31px)/1.2 "Poppins"; }
+.city-hero-heading small { display: block; max-width: 650px; color: rgba(255,255,255,.78); font-size: 14px; line-height: 1.75; }
+.city-detail-content { background: transparent; }
+.city-detail-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 58px; align-items: start; }
+.city-detail-main > .section-title { max-width: 760px; }
+.city-info-section { margin-top: 48px; padding-top: 36px; border-top: 1px solid var(--border); }
+.city-info-section h3, .city-legacy-card h3, .city-network-card h3 { margin: 0; color: var(--heading); font: 700 22px/1.35 "Poppins"; }
+.city-highlight-list { display: grid; gap: 14px; margin-top: 24px; }
+.city-highlight-list > div { display: flex; align-items: center; gap: 12px; min-height: 50px; padding: 15px 18px; border: 1px solid #d9c5ee; border-radius: 12px; background: rgba(255,255,255,.86); color: #514967; font-size: 13px; box-shadow: 0 10px 28px rgba(75,43,128,.05); transition: transform .2s, border-color .2s, box-shadow .2s; }
+.city-highlight-list > div:hover { transform: translateY(-3px); border-color: #a77ae9; box-shadow: var(--shadow-soft); }
+.city-highlight-list svg { flex: 0 0 auto; color: var(--primary); }
+.city-feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 38px; }
+.city-feature-grid article { min-height: 175px; padding: 24px; border: 1px solid #dfd0ed; border-radius: 14px; background: white; box-shadow: var(--shadow-soft); }
+.city-feature-grid article > span, .city-network-card > span { width: 40px; height: 40px; display: grid; place-items: center; border-radius: 11px; color: var(--primary); background: #f0e7fa; }
+.city-feature-grid h3 { margin: 17px 0 8px; color: var(--heading); font: 700 14px/1.35 "Poppins"; }
+.city-feature-grid p, .city-legacy-card p, .city-network-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.75; }
+.city-legacy-card { display: grid; grid-template-columns: .85fr 1.15fr; gap: 38px; margin-top: 46px; padding: 34px; border-radius: 18px; background: #eee5f7; }
+.city-legacy-card .section-kicker { margin-bottom: 13px; }
+.city-network-card { display: flex; align-items: flex-start; gap: 18px; margin-top: 22px; padding: 26px; border: 1px solid #dfd0ed; border-radius: 16px; background: linear-gradient(135deg, #fff, #f8f3fc); }
+.city-network-card h3 { margin-bottom: 8px; }
+.city-detail-sidebar { position: sticky; top: 108px; display: grid; gap: 16px; }
+.city-sidebar-card, .city-stat-card { border: 1px solid var(--border); border-radius: 18px; background: white; box-shadow: var(--shadow-soft); }
+.city-sidebar-card { padding: 30px; }
+.city-sidebar-card > small { color: var(--primary); font-size: 9px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
+.city-sidebar-card h2 { margin: 9px 0 13px; color: var(--heading); font: 700 23px/1.3 "Poppins"; }
+.city-sidebar-card p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.75; }
+.city-stat-card { padding: 10px 24px; }
+.city-stat-card > div { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 0; border-bottom: 1px solid var(--border); }
+.city-stat-card > div:last-child { border-bottom: 0; }
+.city-stat-card small { color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; }
+.city-stat-card strong { color: var(--primary); font: 800 16px "Poppins"; text-align: right; }
+.city-detail-skeleton { padding: 44px 0 90px; }
+.skeleton-hero, .skeleton-lines span, .skeleton-card { position: relative; overflow: hidden; border-radius: 18px; background: linear-gradient(90deg, #eee5f7 0%, #faf7fd 50%, #eee5f7 100%); background-size: 220% 100%; animation: skeletonMove 1.25s linear infinite; }
+.skeleton-hero { height: 520px; }
+.skeleton-lines { display: grid; gap: 15px; margin-top: 40px; }
+.skeleton-lines span { height: 24px; }
+.skeleton-lines span:nth-child(2) { width: 76%; }
+.skeleton-lines span:nth-child(3) { width: 58%; }
+.skeleton-card { min-height: 220px; display: grid; place-items: center; margin-top: 40px; color: var(--primary); }
+@keyframes skeletonMove { to { background-position: -220% 0; } }
 
 /* All events catalog */
 .events-page { padding-top: 78px; }
@@ -544,6 +596,7 @@ img { max-width: 100%; }
   .footer-grid > div:first-child { grid-column: 1 / -1; }
   .footer-bottom { align-items: flex-start; flex-direction: column; gap: 15px; }
   .event-detail-page { padding-top: 68px; }
+  .city-detail-page { padding-top: 68px; }
   .events-page { padding-top: 68px; }
   .events-page-hero { padding: 76px 0 68px; }
   .events-page-heading p { font-size: 14px; }
@@ -574,6 +627,16 @@ img { max-width: 100%; }
   .gallery-lightbox-card img { max-height: calc(100vh - 260px); }
   .gallery-close { right: 14px; top: 14px; }
   .event-detail-hero { padding-top: 25px; }
+  .city-detail-hero { padding-top: 25px; }
+  .city-hero-media { height: 280px; }
+  .city-hero-overlay { background: linear-gradient(0deg, rgba(27,20,65,.9), rgba(27,20,65,.16)); }
+  .city-hero-heading { left: 24px; right: 24px; bottom: 34px; }
+  .city-hero-heading p { font-size: 20px; }
+  .city-hero-heading small { font-size: 13px; }
+  .city-detail-grid { grid-template-columns: 1fr; gap: 42px; }
+  .city-detail-sidebar { position: static; }
+  .city-feature-grid, .city-legacy-card { grid-template-columns: 1fr; }
+  .city-legacy-card { gap: 18px; padding: 28px 24px; }
   .event-detail-image { height: 480px; border-radius: 22px; }
   .event-detail-overlay { background: linear-gradient(0deg, rgba(27,20,65,.88), rgba(27,20,65,.12)); }
   .event-detail-heading { left: 24px; right: 24px; bottom: 30px; }
@@ -592,6 +655,13 @@ img { max-width: 100%; }
   .floating-rating { display: none; }
   .footer-grid { grid-template-columns: 1fr; }
   .footer-grid > div:first-child { grid-column: auto; }
+  .city-hero-media { height: 260px; border-radius: 18px; }
+  .city-hero-heading h1 { font-size: 34px; }
+  .city-hero-heading p { font-size: 17px; }
+  .city-hero-heading small { font-size: 12px; line-height: 1.6; }
+  .city-network-card { flex-direction: column; }
+  .city-stat-card > div { align-items: flex-start; flex-direction: column; gap: 5px; }
+  .city-stat-card strong { text-align: left; }
   .event-detail-image { height: 410px; }
   .event-detail-heading h1 { font-size: 32px; }
   .events-page-heading h1 { font-size: 38px; }

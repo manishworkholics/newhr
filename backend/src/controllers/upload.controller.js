@@ -4,7 +4,7 @@ export function uploadImage(req, res) {
     return;
   }
 
-  const baseUrl = `${req.protocol}://${req.get("host")}`;
+  const baseUrl = `https://api.eventmax.in`;
   const url = `${baseUrl}/uploads/${req.file.filename}`;
 
   res.status(201).json({

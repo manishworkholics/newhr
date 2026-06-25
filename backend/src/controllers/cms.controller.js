@@ -1,4 +1,4 @@
-import { City } from "../models/City.js";
+import { City, createCitySlug } from "../models/City.js";
 import { Event } from "../models/Event.js";
 import { GalleryImage } from "../models/GalleryImage.js";
 import { Roadshow } from "../models/Roadshow.js";
@@ -6,6 +6,54 @@ import { AboutPage } from "../models/AboutPage.js";
 import { Testimonial } from "../models/Testimonial.js";
 import { UpcomingEvent } from "../models/UpcomingEvent.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
+
+function normalizeStringList(value) {
+  if (Array.isArray(value)) return value.map((item) => String(item || "").trim()).filter(Boolean);
+  if (typeof value === "string") {
+    return value
+      .split("\n")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+  return [];
+}
+
+function normalizeObjectList(value, fields) {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) =>
+      fields.reduce((acc, field) => {
+        acc[field] = String(item?.[field] || "").trim();
+        return acc;
+      }, {})
+    )
+    .filter((item) => fields.some((field) => item[field]));
+}
+
+function normalizeCityPayload(body) {
+  const cityName = body.cityName || body.name;
+  return {
+    name: cityName,
+    cityName,
+    slug: createCitySlug(cityName),
+    cityTagline: body.cityTagline,
+    shortDescription: body.shortDescription,
+    aboutTitle: body.aboutTitle,
+    aboutDescription: body.aboutDescription,
+    landmark: body.landmark,
+    historicalEra: body.historicalEra,
+    historicalInsight: body.historicalInsight,
+    networkingVibe: body.networkingVibe,
+    cityHighlights: normalizeStringList(body.cityHighlights),
+    featureCards: normalizeObjectList(body.featureCards, ["title", "description"]),
+    sidebarTitle: body.sidebarTitle,
+    sidebarDescription: body.sidebarDescription,
+    stats: normalizeObjectList(body.stats, ["label", "value"]),
+    sortOrder: Number(body.sortOrder || 0),
+    image: body.image,
+    status: body.status || "Published"
+  };
+}
 
 function parseDetails(details) {
   if (Array.isArray(details)) return details;
@@ -158,13 +206,27 @@ export const getCities = asyncHandler(async (_req, res) => {
   res.json({ success: true, cities });
 });
 
+export const getCityBySlug = asyncHandler(async (req, res) => {
+  const requestedSlug = createCitySlug(req.params.slug);
+  let city = await City.findOne({ slug: requestedSlug, status: { $ne: "Draft" } });
+  if (!city) {
+    const cities = await City.find({ status: { $ne: "Draft" } });
+    city = cities.find((item) => createCitySlug(item.cityName || item.name) === requestedSlug);
+  }
+  if (!city) {
+    res.status(404).json({ success: false, error: "City not found" });
+    return;
+  }
+  res.json({ success: true, city });
+});
+
 export const createCity = asyncHandler(async (req, res) => {
-  const city = await City.create(req.body);
+  const city = await City.create(normalizeCityPayload(req.body));
   res.status(201).json({ success: true, city });
 });
 
 export const updateCity = asyncHandler(async (req, res) => {
-  const city = await City.findByIdAndUpdate(req.params.id, req.body, {
+  const city = await City.findByIdAndUpdate(req.params.id, normalizeCityPayload(req.body), {
     new: true,
     runValidators: true
   });

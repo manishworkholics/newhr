@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
-import { Globe2, MapPin } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { MapPin } from "lucide-react";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AIPitchGenerator from "./components/AIPitchGenerator";
 import InquiryDashboard from "./components/InquiryDashboard";
-import { apiRequest } from "./api";
+import { apiRequest, resolveApiAssetUrl } from "./api";
 
 export default function CitiesPage() {
+  const navigate = useNavigate();
   const [cms, setCms] = useState({ cityDetails: [] });
   const [registerOpen, setRegisterOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
@@ -20,7 +22,7 @@ export default function CitiesPage() {
           cityDetails: data.cities?.filter((city) => city.status !== "Draft") || []
         });
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   const openRegistration = (city = "") => {
@@ -38,7 +40,6 @@ export default function CitiesPage() {
       <main className="cities-page">
         <section className="section city-showcase">
           <div className="container city-showcase-heading">
-            <div className="section-kicker"><Globe2 size={14} /> Cultural heritage &amp; enterprise metropolises</div>
             <h1 className="section-title">Our {cms.cityDetails.length} Summit Cities &amp;<br />Their Historical Legacies</h1>
             <p>
               Every city on the TalentMax Roadshow is a unique tapestry of historic wonders and dynamic corporate
@@ -48,13 +49,17 @@ export default function CitiesPage() {
 
           <div className="container city-showcase-grid">
             {cms.cityDetails.map((city) => (
-              <article className="city-showcase-card" key={city.id || city.name}>
+              <article
+                className="city-showcase-card cursor-pointer transition hover:-translate-y-1"
+                key={city.id || city.name || city.cityName}
+                onClick={() => navigate(`/cities/${city.slug || slugify(city.cityName || city.name)}`)}
+              >
                 <div className="city-showcase-image">
-                  {city.image ? <img src={city.image} alt={city.landmark || city.name} /> : <div className="city-image-fallback"><MapPin size={34} /></div>}
+                  {city.image ? <img src={resolveApiAssetUrl(city.image)} alt={city.landmark || city.cityName || city.name} /> : <div className="city-image-fallback"><MapPin size={34} /></div>}
                 </div>
                 <div className="city-showcase-body">
-                  <h3><MapPin size={16} /> {city.name}</h3>
-                  <p>{city.historicalInsight}</p>
+                  <h3><MapPin size={16} /> {city.cityName || city.name}</h3>
+                  <p>{city.shortDescription || city.historicalInsight}</p>
                 </div>
               </article>
             ))}
@@ -74,4 +79,8 @@ export default function CitiesPage() {
       />
     </div>
   );
+}
+
+function slugify(value) {
+  return String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 }

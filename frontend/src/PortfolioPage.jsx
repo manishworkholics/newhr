@@ -5,17 +5,37 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AIPitchGenerator from "./components/AIPitchGenerator";
 import InquiryDashboard from "./components/InquiryDashboard";
+import { apiRequest, resolveApiAssetUrl } from "./api";
 import { TIMELINE } from "./data";
 
 export default function PortfolioPage() {
   const [query, setQuery] = useState("");
   const [registerOpen, setRegisterOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
+  const [journey, setJourney] = useState([]);
 
-  useEffect(() => window.scrollTo(0, 0), []);
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    apiRequest("/journey")
+      .then((data) => setJourney(data.journey || []))
+      .catch(() => setJourney([]));
+  }, []);
 
-  const years = TIMELINE.filter((item) =>
-    `${item.title} ${item.description} ${item.highlights.join(" ")}`.toLowerCase().includes(query.toLowerCase())
+  const entries = journey.length ? journey : TIMELINE.map((item, index) => ({
+    id: `20${item.year}`,
+    year: Number(`20${item.year}`),
+    title: item.title.replace(/^\d{4}:?\s*/, ""),
+    shortDescription: item.description,
+    image: item.image,
+    milestones: item.highlights.map((highlight) => {
+      const match = highlight.match(/^(.*?)\s*\((.*?)\)$/);
+      return { title: match?.[1] || highlight, month: match?.[2] || "" };
+    }),
+    displayOrder: index + 1
+  }));
+
+  const years = entries.filter((item) =>
+    `${item.year} ${item.title} ${item.shortDescription} ${item.milestones?.map((milestone) => milestone.title).join(" ")}`.toLowerCase().includes(query.toLowerCase())
   );
 
   return (
@@ -38,16 +58,16 @@ export default function PortfolioPage() {
             </div>
             <div className="portfolio-grid">
               {years.map((item) => (
-                <article className="portfolio-card" key={item.year}>
-                  <Link className="portfolio-card-image" to={`/portfolio/20${item.year}`}>
-                    <img src={item.image} alt={item.title} />
-                    <span>20{item.year}</span>
+                <article className="portfolio-card" key={item.id || item.year}>
+                  <Link className="portfolio-card-image" to={`/journey/${item.year}`}>
+                    <img src={resolveApiAssetUrl(item.image)} alt={item.title} />
+                    <span>{item.year}</span>
                   </Link>
                   <div className="portfolio-card-body">
-                    <h2>{item.title.replace(/^\d{4}:?\s*/, "")}</h2>
-                    <p>{item.description}</p>
-                    <ul>{item.highlights.map((highlight) => <li key={highlight}>{highlight}</li>)}</ul>
-                    <Link className="card-link" to={`/portfolio/20${item.year}`}>View year details <ArrowRight size={15} /></Link>
+                    <h2>{item.title}</h2>
+                    <p>{item.shortDescription}</p>
+                    <ul>{item.milestones?.map((milestone) => <li key={`${milestone.title}-${milestone.month}`}>{milestone.month ? `${milestone.title} (${milestone.month})` : milestone.title}</li>)}</ul>
+                    <Link className="card-link" to={`/journey/${item.year}`}>View year details <ArrowRight size={15} /></Link>
                   </div>
                 </article>
               ))}

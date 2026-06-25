@@ -7,6 +7,7 @@ import {
   deleteEvent,
   deleteGalleryImage,
   getCities,
+  getCityBySlug,
   getCms,
   getEvents,
   getGallery,
@@ -26,38 +27,40 @@ import {
   getUpcomingEvents,
   updateUpcomingEvent
 } from "../controllers/cms.controller.js";
+import { requireAdminAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
 router.get("/", getCms);
 router.get("/roadshow", getRoadshow);
-router.put("/roadshow", updateRoadshow);
+router.put("/roadshow", requireAdminAuth, updateRoadshow);
 router.get("/about", getAboutPage);
-router.put("/about", updateAboutPage);
+router.put("/about", requireAdminAuth, updateAboutPage);
 
 router.get("/events", getEvents);
-router.post("/events", createEvent);
-router.put("/events/:id", updateEvent);
-router.delete("/events/:id", deleteEvent);
+router.post("/events", requireAdminAuth, createEvent);
+router.put("/events/:id", requireAdminAuth, updateEvent);
+router.delete("/events/:id", requireAdminAuth, deleteEvent);
 
 router.get("/upcoming-events", getUpcomingEvents);
-router.post("/upcoming-events", createUpcomingEvent);
-router.put("/upcoming-events/:id", updateUpcomingEvent);
-router.delete("/upcoming-events/:id", deleteUpcomingEvent);
+router.post("/upcoming-events", requireAdminAuth, createUpcomingEvent);
+router.put("/upcoming-events/:id", requireAdminAuth, updateUpcomingEvent);
+router.delete("/upcoming-events/:id", requireAdminAuth, deleteUpcomingEvent);
 
 router.get("/cities", getCities);
-router.post("/cities", createCity);
-router.put("/cities/:id", updateCity);
-router.delete("/cities/:id", deleteCity);
+router.get("/cities/:slug", getCityBySlug);
+router.post("/cities", requireAdminAuth, createCity);
+router.put("/cities/:id", requireAdminAuth, updateCity);
+router.delete("/cities/:id", requireAdminAuth, deleteCity);
 
 router.get("/gallery", getGallery);
-router.post("/gallery", createGalleryImage);
-router.put("/gallery/:id", updateGalleryImage);
-router.delete("/gallery/:id", deleteGalleryImage);
+router.post("/gallery", requireAdminAuth, createGalleryImage);
+router.put("/gallery/:id", requireAdminAuth, updateGalleryImage);
+router.delete("/gallery/:id", requireAdminAuth, deleteGalleryImage);
 
 router.get("/testimonials", getTestimonials);
-router.post("/testimonials", createTestimonial);
-router.put("/testimonials/:id", updateTestimonial);
-router.delete("/testimonials/:id", deleteTestimonial);
+router.post("/testimonials", requireAdminAuth, createTestimonial);
+router.put("/testimonials/:id", requireAdminAuth, updateTestimonial);
+router.delete("/testimonials/:id", requireAdminAuth, deleteTestimonial);
 
 export default router;

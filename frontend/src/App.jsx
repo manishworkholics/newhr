@@ -6,6 +6,7 @@ import PortfolioPage from "./PortfolioPage.jsx";
 import PortfolioDetailPage from "./PortfolioDetailPage.jsx";
 import GalleryPage from "./GalleryPage.jsx";
 import CitiesPage from "./CitiesPage.jsx";
+import CityDetailsPage from "./citiesdetailpage.jsx";
 import AboutPage from "./AboutPage.jsx";
 import WhatsAppButton from "./components/WhatsAppButton.jsx";
 
@@ -19,8 +20,11 @@ export default function App() {
         <Route path="/events/:eventId" element={<EventDetailPage />} />
         <Route path="/portfolio" element={<PortfolioPage />} />
         <Route path="/portfolio/:year" element={<PortfolioDetailPage />} />
+        <Route path="/journey" element={<PortfolioPage />} />
+        <Route path="/journey/:year" element={<PortfolioDetailPage />} />
         <Route path="/gallery" element={<GalleryPage />} />
         <Route path="/cities" element={<CitiesPage />} />
+        <Route path="/cities/:slug" element={<CityDetailsPage />} />
         <Route path="/sponsors" element={<HomePage initialSection="sponsors" />} />
         <Route path="/destinations" element={<HomePage initialSection="destinations" />} />
         <Route path="*" element={<Navigate to="/" replace />} />

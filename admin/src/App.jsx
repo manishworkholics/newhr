@@ -37,12 +37,14 @@ import {
   Undo
 } from "ckeditor5";
 import "ckeditor5/ckeditor5.css";
-import { apiRequest, uploadImage } from "./api";
+import { apiRequest, clearAdminToken, getAdminToken, resolveApiAssetUrl, setAdminToken, uploadImage } from "./api";
+import AboutAdmin from "./AboutAdmin";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
   { id: "roadshow", label: "Roadshow CMS", icon: Globe2 },
   { id: "about", label: "About Us", icon: BookOpen },
+  { id: "journey", label: "Journey Timeline", icon: CalendarDays },
   { id: "events", label: "Flagship Events", icon: CalendarDays },
   { id: "upcoming-events", label: "Upcoming Events", icon: CalendarDays },
   { id: "cities", label: "Cities", icon: MapPin },
@@ -74,15 +76,23 @@ const emptyRoadshow = {
 };
 
 const emptyAbout = {
-  badge: "",
-  title: "",
-  subtitle: "",
-  heroImage: "",
-  content: "",
-  status: "Published"
+  heroTitle: "About EventMax",
+  heroDescription: "",
+  story: "",
+  vision: "",
+  mission: "",
+  aboutImage: "",
+  stats: {
+    events: 0,
+    clients: 0,
+    partners: 0,
+    years: 0
+  }
 };
 
 export default function App() {
+  const [authChecked, setAuthChecked] = useState(false);
+  const [adminUser, setAdminUser] = useState(null);
   const [active, setActive] = useState("overview");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -97,6 +107,7 @@ export default function App() {
   const [gallery, setGallery] = useState([]);
   const [testimonials, setTestimonials] = useState([]);
   const [companyLogos, setCompanyLogos] = useState([]);
+  const [journey, setJourney] = useState([]);
   const [inquiries, setInquiries] = useState([]);
   const [passes, setPasses] = useState([]);
 
@@ -105,23 +116,72 @@ export default function App() {
     [active]
   );
 
+  const navigateAdmin = (path) => {
+    window.history.pushState({}, "", path);
+    window.dispatchEvent(new Event("eventmax-auth-change"));
+  };
+
+  const logout = () => {
+    clearAdminToken();
+    setAdminUser(null);
+    navigateAdmin("/admin/login");
+  };
+
+  useEffect(() => {
+    const syncAuth = () => {
+      if (!getAdminToken()) {
+        setAdminUser(null);
+        setAuthChecked(true);
+        if (window.location.pathname !== "/admin/login") {
+          window.history.replaceState({}, "", "/admin/login");
+        }
+        return;
+      }
+
+      apiRequest("/admin/auth/me")
+        .then((data) => {
+          setAdminUser(data.admin);
+          setAuthChecked(true);
+          if (window.location.pathname === "/" || window.location.pathname === "/admin/login") {
+            window.history.replaceState({}, "", "/admin/dashboard");
+          }
+        })
+        .catch(() => {
+          setAuthChecked(true);
+          setAdminUser(null);
+          window.history.replaceState({}, "", "/admin/login");
+        });
+    };
+
+    syncAuth();
+    window.addEventListener("popstate", syncAuth);
+    window.addEventListener("eventmax-auth-change", syncAuth);
+    return () => {
+      window.removeEventListener("popstate", syncAuth);
+      window.removeEventListener("eventmax-auth-change", syncAuth);
+    };
+  }, []);
+
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [cms, inquiryData, passData, companyLogoData] = await Promise.all([
+      const [cms, inquiryData, passData, companyLogoData, aboutData, journeyData] = await Promise.all([
         apiRequest("/cms"),
         apiRequest("/inquiries"),
         apiRequest("/passes"),
-        apiRequest("/admin/company-logos")
+        apiRequest("/admin/company-logos"),
+        apiRequest("/v1/about"),
+        apiRequest("/admin/journey")
       ]);
       setRoadshow(cms.roadshow || emptyRoadshow);
-      setAbout(cms.about || emptyAbout);
+      setAbout({ ...emptyAbout, ...(aboutData.about || {}), stats: { ...emptyAbout.stats, ...(aboutData.about?.stats || {}) } });
       setEvents(cms.events || []);
       setUpcomingEvents(cms.upcomingEvents || []);
       setCities(cms.cities || []);
       setGallery(cms.gallery || []);
       setTestimonials(cms.testimonials || []);
       setCompanyLogos(companyLogoData.companyLogos || []);
+      setJourney(journeyData.journey || []);
       setInquiries(inquiryData.inquiries || []);
       setPasses(passData.passes || []);
     } finally {
@@ -130,11 +190,12 @@ export default function App() {
   };
 
   useEffect(() => {
+    if (!adminUser) return;
     loadAll().catch((err) => {
       console.error(err);
       setLoading(false);
     });
-  }, []);
+  }, [adminUser]);
 
   const saveRoadshow = async () => {
     setSaving(true);
@@ -152,8 +213,8 @@ export default function App() {
   const saveAbout = async () => {
     setSaving(true);
     try {
-      const data = await apiRequest("/cms/about", {
-        method: "PUT",
+      const data = await apiRequest(about.id ? `/v1/about/${about.id}` : "/v1/about", {
+        method: about.id ? "PUT" : "POST",
         body: JSON.stringify(about)
       });
       setAbout(data.about);
@@ -191,12 +252,22 @@ export default function App() {
 
       if (editor.type === "city") {
         const payload = {
-          name: form.name,
+          name: form.name || form.cityName,
+          cityName: form.cityName || form.name,
+          cityTagline: form.cityTagline,
+          shortDescription: form.shortDescription,
+          aboutTitle: form.aboutTitle,
+          aboutDescription: form.aboutDescription,
           landmark: form.landmark,
           historicalEra: form.historicalEra,
-          image: form.image,
           historicalInsight: form.historicalInsight,
           networkingVibe: form.networkingVibe,
+          cityHighlights: Array.isArray(form.cityHighlights) ? form.cityHighlights : [],
+          featureCards: Array.isArray(form.featureCards) ? form.featureCards : [],
+          sidebarTitle: form.sidebarTitle,
+          sidebarDescription: form.sidebarDescription,
+          stats: Array.isArray(form.stats) ? form.stats : [],
+          image: form.image,
           status: form.status,
           sortOrder: Number(form.sortOrder || 0)
         };
@@ -207,6 +278,29 @@ export default function App() {
           });
         } else {
           await apiRequest("/cms/cities", {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+        }
+      }
+
+      if (editor.type === "journey") {
+        const payload = {
+          year: Number(form.year || 0),
+          title: form.title,
+          shortDescription: form.shortDescription,
+          image: form.image,
+          milestones: Array.isArray(form.milestones) ? form.milestones : [],
+          displayOrder: Number(form.displayOrder || 0),
+          isPublished: form.isPublished === false ? false : true
+        };
+        if (editor.data?.id) {
+          await apiRequest(`/admin/journey/${editor.data.id}`, {
+            method: "PUT",
+            body: JSON.stringify(payload)
+          });
+        } else {
+          await apiRequest("/admin/journey", {
             method: "POST",
             body: JSON.stringify(payload)
           });
@@ -320,6 +414,7 @@ export default function App() {
     if (type === "event") await apiRequest(`/cms/events/${id}`, { method: "DELETE" });
     if (type === "upcoming-event") await apiRequest(`/cms/upcoming-events/${id}`, { method: "DELETE" });
     if (type === "city") await apiRequest(`/cms/cities/${id}`, { method: "DELETE" });
+    if (type === "journey") await apiRequest(`/admin/journey/${id}`, { method: "DELETE" });
     if (type === "gallery") await apiRequest(`/cms/gallery/${id}`, { method: "DELETE" });
     if (type === "testimonial") await apiRequest(`/cms/testimonials/${id}`, { method: "DELETE" });
     if (type === "company-logo") await apiRequest(`/admin/company-logos/${id}`, { method: "DELETE" });
@@ -336,6 +431,21 @@ export default function App() {
     setInquiries((current) => current.map((item) => item.id === id ? data.inquiry : item));
   };
 
+  if (!authChecked) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#061527] text-[#f4c842]">
+        <Loader2 className="animate-spin" size={36} />
+      </div>
+    );
+  }
+
+  if (!adminUser) {
+    return <LoginPage onLogin={(admin) => {
+      setAdminUser(admin);
+      navigateAdmin("/admin/dashboard");
+    }} />;
+  }
+
   return (
     <div className="min-h-screen bg-[#061527] text-slate-100 font-sans">
       <Sidebar
@@ -348,7 +458,7 @@ export default function App() {
         }}
       />
       <div className="lg:pl-72">
-        <Topbar title={activeLabel} query={query} setQuery={setQuery} onMenu={() => setSidebarOpen(true)} />
+        <Topbar title={activeLabel} query={query} setQuery={setQuery} onMenu={() => setSidebarOpen(true)} adminUser={adminUser} onLogout={logout} />
         <main className="px-4 py-5 sm:px-6 lg:px-8">
           {loading ? (
             <div className="flex h-[60vh] items-center justify-center text-[#f4c842]">
@@ -363,7 +473,10 @@ export default function App() {
                 <RoadshowForm roadshow={roadshow} setRoadshow={setRoadshow} onSave={saveRoadshow} saving={saving} />
               )}
               {active === "about" && (
-                <AboutPageForm about={about} setAbout={setAbout} onSave={saveAbout} saving={saving} />
+                <AboutAdmin about={about} setAbout={setAbout} onSave={saveAbout} saving={saving} />
+              )}
+              {active === "journey" && (
+                <JourneyGrid journey={filterRows(journey, query)} onEdit={setEditor} onDelete={(id) => deleteRecord("journey", id)} />
               )}
               {active === "events" && (
                 <EventGrid events={events} onEdit={setEditor} onDelete={(id) => deleteRecord("event", id)} />
@@ -411,7 +524,7 @@ function Sidebar({ active, onChange, open, onClose }) {
         <div className="flex h-full min-h-0 flex-col">
           <div className="flex items-center justify-between border-b border-white/10 px-5 py-5">
             <div>
-              <div className="font-display text-xl font-extrabold text-[#f4c842]">TalentMax</div>
+              <div className="font-display text-xl font-extrabold text-[#f4c842]">EventMax</div>
               <div className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">Admin Console</div>
             </div>
             <button className="lg:hidden" onClick={onClose}><X size={20} /></button>
@@ -443,7 +556,54 @@ function Sidebar({ active, onChange, open, onClose }) {
   );
 }
 
-function Topbar({ title, query, setQuery, onMenu }) {
+function LoginPage({ onLogin }) {
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const data = await apiRequest("/admin/auth/login", {
+        method: "POST",
+        body: JSON.stringify(form)
+      });
+      setAdminToken(data.token);
+      onLogin(data.admin);
+    } catch (err) {
+      setError(err.message || "Login failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <main className="flex min-h-screen items-center justify-center bg-[#061527] px-4 py-10 text-white">
+      <form onSubmit={submit} className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0b1f37] p-7 shadow-2xl">
+        <div className="mb-7">
+          <div className="font-display text-3xl font-extrabold text-[#f4c842]">EventMax</div>
+          <div className="mt-2 text-xs font-extrabold uppercase tracking-[0.24em] text-slate-400">Admin Login</div>
+        </div>
+        {error && <div className="mb-4 rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+        <div className="grid gap-4">
+          <Input label="Email" value={form.email} onChange={(email) => setForm({ ...form, email })} />
+          <label className="block">
+            <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">Password</span>
+            <input type="password" value={form.password} onChange={(event) => setForm({ ...form, password: event.target.value })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+          </label>
+        </div>
+        <button disabled={loading} className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg bg-[#f4c842] px-5 py-3 font-extrabold text-[#061527] disabled:opacity-60">
+          {loading && <Loader2 className="animate-spin" size={16} />}
+          Login
+        </button>
+      </form>
+    </main>
+  );
+}
+
+function Topbar({ title, query, setQuery, onMenu, adminUser, onLogout }) {
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#061527]/90 backdrop-blur">
       <div className="flex items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -456,6 +616,11 @@ function Topbar({ title, query, setQuery, onMenu }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={17} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search records..." className="w-full rounded-lg border border-white/10 bg-[#0b1f37] py-2.5 pl-10 pr-3 text-sm text-white outline-none focus:border-[#f4c842]" />
         </div>
+        <div className="hidden text-right text-xs text-slate-400 sm:block">
+          <div className="font-bold text-white">{adminUser?.name}</div>
+          <div>{adminUser?.email}</div>
+        </div>
+        <button onClick={onLogout} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-extrabold text-slate-200 hover:border-[#f4c842] hover:text-[#f4c842]">Logout</button>
       </div>
     </header>
   );
@@ -671,12 +836,48 @@ function CityGrid({ cities, onEdit, onDelete }) {
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {cities.map((city) => (
           <article key={city.id} className="rounded-lg border border-white/10 bg-white/[0.03] p-4">
-            <img src={city.image || "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=800&q=80"} alt={city.name} className="mb-4 h-36 w-full rounded-md object-cover" />
-            <h3 className="font-display text-xl font-extrabold">{city.name}</h3>
+            <img src={resolveApiAssetUrl(city.image) || "https://images.unsplash.com/photo-1521791136064-7986c2920216?auto=format&fit=crop&w=800&q=80"} alt={city.cityName || city.name} className="mb-4 h-36 w-full rounded-md object-cover" />
+            <h3 className="font-display text-xl font-extrabold">{city.cityName || city.name}</h3>
             <p className="mt-1 text-sm text-slate-400">{city.landmark}</p>
             <div className="mt-4 flex gap-2"><ActionButton onClick={() => onEdit({ type: "city", data: city })} /><DeleteButton onClick={() => onDelete(city.id)} /></div>
           </article>
         ))}
+      </div>
+    </section>
+  );
+}
+
+function JourneyGrid({ journey, onEdit, onDelete }) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0b1f37] p-5">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f4c842]">CMS</div>
+          <h2 className="mt-2 font-display text-2xl font-extrabold">Journey Timeline</h2>
+        </div>
+        <button onClick={() => onEdit({ type: "journey" })} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-sm font-extrabold text-[#061527]"><CirclePlus size={16} /> Add Journey</button>
+      </div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[900px] text-left text-sm">
+          <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-slate-400">
+            <tr>
+              {["Year", "Title", "Milestones", "Status", "Display Order", "Created Date", "Actions"].map((column) => <th key={column} className="px-5 py-4">{column}</th>)}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-white/10">
+            {journey.map((item) => (
+              <tr key={item.id}>
+                <td className="px-5 py-4 font-extrabold text-white">{item.year}</td>
+                <td className="px-5 py-4">{item.title}</td>
+                <td className="px-5 py-4">{item.milestones?.length || 0}</td>
+                <td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase ${item.isPublished ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-300"}`}>{item.isPublished ? "Published" : "Draft"}</span></td>
+                <td className="px-5 py-4">{item.displayOrder ?? 0}</td>
+                <td className="px-5 py-4">{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : "-"}</td>
+                <td className="px-5 py-4"><div className="flex gap-2"><ActionButton onClick={() => onEdit({ type: "journey", data: item })} /><DeleteButton onClick={() => onDelete(item.id)} /></div></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </section>
   );
@@ -948,7 +1149,8 @@ function EditorDrawer({ editor, onClose, onSave, saving }) {
   const isGallery = editor.type === "gallery";
   const isTestimonial = editor.type === "testimonial";
   const isCompanyLogo = editor.type === "company-logo";
-  const editorLabel = isEvent ? "Event" : isUpcomingEvent ? "Upcoming Event" : isGallery ? "Gallery Image" : isTestimonial ? "Testimonial" : isCompanyLogo ? "Company Logo" : "City";
+  const isJourney = editor.type === "journey";
+  const editorLabel = isEvent ? "Event" : isUpcomingEvent ? "Upcoming Event" : isGallery ? "Gallery Image" : isTestimonial ? "Testimonial" : isCompanyLogo ? "Company Logo" : isJourney ? "Journey" : "City";
   return (
     <div className="fixed inset-0 z-[70] bg-black/55">
       <div className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col border-l border-white/10 bg-[#091b30] shadow-2xl">
@@ -958,8 +1160,14 @@ function EditorDrawer({ editor, onClose, onSave, saving }) {
         </div>
         <div className="flex-1 overflow-y-auto p-5">
           <div className="grid gap-4">
-            {isEvent || isUpcomingEvent ? <EventFields form={form} setForm={setForm} /> : isGallery ? <GalleryFields form={form} setForm={setForm} /> : isTestimonial ? <TestimonialFields form={form} setForm={setForm} /> : isCompanyLogo ? <CompanyLogoFields form={form} setForm={setForm} /> : <CityFields form={form} setForm={setForm} />}
-            {isCompanyLogo ? <CompanyLogoImageField form={form} setForm={setForm} /> : <ImageField form={form} setForm={setForm} />}
+            {isEvent || isUpcomingEvent ? <EventFields form={form} setForm={setForm} /> : isGallery ? <GalleryFields form={form} setForm={setForm} /> : isTestimonial ? <TestimonialFields form={form} setForm={setForm} /> : isCompanyLogo ? <CompanyLogoFields form={form} setForm={setForm} /> : isJourney ? <JourneyFields form={form} setForm={setForm} /> : <CityFields form={form} setForm={setForm} />}
+            {isCompanyLogo ? (
+              <CompanyLogoImageField form={form} setForm={setForm} />
+            ) : editor.type === "city" ? (
+              <ImageField form={form} setForm={setForm} label="Image URL" uploadLabel="Upload Image" />
+            ) : (
+              <ImageField form={form} setForm={setForm} />
+            )}
           </div>
         </div>
         <div className="flex justify-end gap-3 border-t border-white/10 p-5">
@@ -991,14 +1199,126 @@ function EventFields({ form, setForm }) {
   );
 }
 
-function CityFields({ form, setForm }) {
+function JourneyFields({ form, setForm }) {
+  const milestones = Array.isArray(form.milestones) ? form.milestones : [];
+
+  const updateMilestone = (index, field, value) => {
+    const next = [...milestones];
+    next[index] = { ...(next[index] || {}), [field]: value };
+    setForm({ ...form, milestones: next });
+  };
+
   return (
     <>
-      <Input label="City Name" value={form.name || ""} onChange={(v) => setForm({ ...form, name: v })} />
+      <Input label="Year" value={form.year || ""} onChange={(year) => setForm({ ...form, year })} />
+      <Input label="Title" value={form.title || ""} onChange={(title) => setForm({ ...form, title })} />
+      <Textarea label="Short Description" value={form.shortDescription || ""} onChange={(shortDescription) => setForm({ ...form, shortDescription })} />
+      <Input label="Display Order" value={form.displayOrder ?? ""} onChange={(displayOrder) => setForm({ ...form, displayOrder })} />
+      <label className="flex items-center justify-between gap-4 rounded-lg border border-white/10 bg-[#061527] p-4">
+        <span>
+          <span className="block text-xs font-extrabold uppercase tracking-wider text-slate-400">Published</span>
+          <span className="mt-1 block text-xs text-slate-400">Show this journey entry on the public site.</span>
+        </span>
+        <input type="checkbox" checked={form.isPublished !== false} onChange={(event) => setForm({ ...form, isPublished: event.target.checked })} className="h-5 w-5 accent-[#f4c842]" />
+      </label>
+      <DynamicPanel
+        title="Milestones"
+        onAdd={() => setForm({ ...form, milestones: [...milestones, { title: "", month: "" }] })}
+      >
+        {milestones.map((milestone, index) => (
+          <div key={index} className="grid gap-2 rounded-lg border border-white/10 p-3 sm:grid-cols-[1fr_140px_auto]">
+            <input placeholder="Title" value={milestone.title || ""} onChange={(event) => updateMilestone(index, "title", event.target.value)} className="rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+            <input placeholder="Month" value={milestone.month || ""} onChange={(event) => updateMilestone(index, "month", event.target.value)} className="rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+            <button type="button" onClick={() => setForm({ ...form, milestones: milestones.filter((_, itemIndex) => itemIndex !== index) })} className="rounded-lg border border-red-400/20 px-3 text-red-300 hover:bg-red-500/10"><Trash2 size={14} /></button>
+          </div>
+        ))}
+      </DynamicPanel>
+    </>
+  );
+}
+
+function CityFields({ form, setForm }) {
+  const cityHighlights = Array.isArray(form.cityHighlights) ? form.cityHighlights : [];
+  const featureCards = Array.isArray(form.featureCards) ? form.featureCards : [];
+  const stats = Array.isArray(form.stats) ? form.stats : [];
+
+  const updateHighlight = (index, value) => {
+    const next = [...cityHighlights];
+    next[index] = value;
+    setForm({ ...form, cityHighlights: next });
+  };
+
+  const updateFeatureCard = (index, field, value) => {
+    const next = [...featureCards];
+    next[index] = { ...(next[index] || {}), [field]: value };
+    setForm({ ...form, featureCards: next });
+  };
+
+  const updateStat = (index, field, value) => {
+    const next = [...stats];
+    next[index] = { ...(next[index] || {}), [field]: value };
+    setForm({ ...form, stats: next });
+  };
+
+  return (
+    <>
+      <Input label="City Name" value={form.cityName || form.name || ""} onChange={(v) => setForm({ ...form, cityName: v, name: v })} />
+      <Input label="City Tagline" value={form.cityTagline || ""} onChange={(v) => setForm({ ...form, cityTagline: v })} />
+      <Textarea label="Short Description" value={form.shortDescription || ""} onChange={(v) => setForm({ ...form, shortDescription: v })} />
+      <Input label="About Title" value={form.aboutTitle || ""} onChange={(v) => setForm({ ...form, aboutTitle: v })} />
+      <Textarea label="About Description" value={form.aboutDescription || ""} onChange={(v) => setForm({ ...form, aboutDescription: v })} />
       <Input label="Landmark" value={form.landmark || ""} onChange={(v) => setForm({ ...form, landmark: v })} />
       <Input label="Historical Era" value={form.historicalEra || ""} onChange={(v) => setForm({ ...form, historicalEra: v })} />
       <Textarea label="Historical Insight" value={form.historicalInsight || ""} onChange={(v) => setForm({ ...form, historicalInsight: v })} />
       <Textarea label="Networking Vibe" value={form.networkingVibe || ""} onChange={(v) => setForm({ ...form, networkingVibe: v })} />
+      <DynamicPanel
+        title="City Highlights"
+        onAdd={() => setForm({ ...form, cityHighlights: [...cityHighlights, ""] })}
+      >
+        {cityHighlights.map((item, index) => (
+          <div key={index} className="flex gap-2">
+            <input value={item || ""} onChange={(event) => updateHighlight(index, event.target.value)} className="min-w-0 flex-1 rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+            <button type="button" onClick={() => setForm({ ...form, cityHighlights: cityHighlights.filter((_, itemIndex) => itemIndex !== index) })} className="rounded-lg border border-red-400/20 px-3 text-red-300 hover:bg-red-500/10"><Trash2 size={14} /></button>
+          </div>
+        ))}
+      </DynamicPanel>
+      <DynamicPanel
+        title="Feature Cards"
+        onAdd={() => setForm({ ...form, featureCards: [...featureCards, { title: "", description: "" }] })}
+      >
+        {featureCards.map((card, index) => (
+          <div key={index} className="rounded-lg border border-white/10 p-3">
+            <div className="mb-3 flex justify-end">
+              <button type="button" onClick={() => setForm({ ...form, featureCards: featureCards.filter((_, itemIndex) => itemIndex !== index) })} className="rounded-lg border border-red-400/20 px-3 py-2 text-red-300 hover:bg-red-500/10"><Trash2 size={14} /></button>
+            </div>
+            <Input label="Title" value={card.title || ""} onChange={(v) => updateFeatureCard(index, "title", v)} />
+            <div className="mt-3">
+              <Textarea label="Description" value={card.description || ""} onChange={(v) => updateFeatureCard(index, "description", v)} />
+            </div>
+          </div>
+        ))}
+      </DynamicPanel>
+      <Input label="Sidebar Title" value={form.sidebarTitle || ""} onChange={(v) => setForm({ ...form, sidebarTitle: v })} />
+      <Textarea label="Sidebar Description" value={form.sidebarDescription || ""} onChange={(v) => setForm({ ...form, sidebarDescription: v })} />
+      <DynamicPanel
+        title="City Stats"
+        onAdd={() => setForm({ ...form, stats: [...stats, { label: "", value: "" }] })}
+      >
+        {stats.map((stat, index) => (
+          <div key={index} className="grid gap-2 rounded-lg border border-white/10 p-3 sm:grid-cols-[1fr_1fr_auto]">
+            <input placeholder="Label" value={stat.label || ""} onChange={(event) => updateStat(index, "label", event.target.value)} className="rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+            <input placeholder="Value" value={stat.value || ""} onChange={(event) => updateStat(index, "value", event.target.value)} className="rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+            <button type="button" onClick={() => setForm({ ...form, stats: stats.filter((_, itemIndex) => itemIndex !== index) })} className="rounded-lg border border-red-400/20 px-3 text-red-300 hover:bg-red-500/10"><Trash2 size={14} /></button>
+          </div>
+        ))}
+      </DynamicPanel>
+      <label className="block">
+        <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">Status</span>
+        <select value={form.status || "Published"} onChange={(event) => setForm({ ...form, status: event.target.value })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]">
+          <option value="Published">Published</option>
+          <option value="Draft">Draft</option>
+        </select>
+      </label>
       <Input label="Sort Order" value={form.sortOrder || ""} onChange={(v) => setForm({ ...form, sortOrder: v })} />
     </>
   );
@@ -1086,27 +1406,41 @@ function CompanyLogoImageField({ form, setForm }) {
   );
 }
 
-function ImageField({ form, setForm }) {
+function DynamicPanel({ title, onAdd, children }) {
+  return (
+    <div className="rounded-lg border border-white/10 p-4">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">{title}</span>
+        <button type="button" onClick={onAdd} className="inline-flex items-center gap-2 rounded-lg border border-[#f4c842]/30 px-3 py-2 text-xs font-extrabold text-[#f4c842]"><CirclePlus size={14} /> Add More</button>
+      </div>
+      <div className="grid gap-3">
+        {children}
+      </div>
+    </div>
+  );
+}
+
+function ImageField({ form, setForm, fieldName = "image", label = "Image URL", uploadLabel = "Upload Image" }) {
   const [uploading, setUploading] = useState(false);
   const handleFile = async (file) => {
     if (!file) return;
     setUploading(true);
     try {
       const image = await uploadImage(file);
-      setForm({ ...form, image });
+      setForm({ ...form, [fieldName]: image });
     } finally {
       setUploading(false);
     }
   };
   return (
     <div className="rounded-lg border border-white/10 p-4">
-      <Input label="Image URL" value={form.image || ""} onChange={(v) => setForm({ ...form, image: v })} />
+      <Input label={label} value={form[fieldName] || ""} onChange={(v) => setForm({ ...form, [fieldName]: v })} />
       <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-[#f4c842]/40 p-4 text-sm font-bold text-[#f4c842]">
         {uploading ? <Loader2 className="animate-spin" size={16} /> : <Upload size={16} />}
-        Upload Image
+        {uploadLabel}
         <input type="file" accept="image/*" className="hidden" onChange={(e) => handleFile(e.target.files?.[0])} />
       </label>
-      {form.image && <img src={form.image} alt="" className="mt-3 h-36 w-full rounded-md object-cover" />}
+      {form[fieldName] && <img src={resolveApiAssetUrl(form[fieldName])} alt="" className="mt-3 h-36 w-full rounded-md object-cover" />}
     </div>
   );
 }
@@ -1128,7 +1462,63 @@ function DeleteButton({ onClick }) {
 }
 
 function SettingsPanel() {
-  return <section className="rounded-xl border border-white/10 bg-[#0b1f37] p-6"><h2 className="font-display text-2xl font-extrabold">Settings</h2><p className="mt-2 text-sm text-slate-400">Admin auth and roles can be added next.</p></section>;
+  const [form, setForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  const submit = async (event) => {
+    event.preventDefault();
+    setMessage("");
+    setError("");
+
+    if (form.newPassword !== form.confirmPassword) {
+      setError("New password and confirmation do not match.");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await apiRequest("/admin/auth/change-password", {
+        method: "PUT",
+        body: JSON.stringify({
+          currentPassword: form.currentPassword,
+          newPassword: form.newPassword
+        })
+      });
+      setForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+      setMessage("Password changed successfully.");
+    } catch (err) {
+      setError(err.message || "Password change failed.");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0b1f37] p-6">
+      <h2 className="font-display text-2xl font-extrabold">Settings</h2>
+      <p className="mt-2 text-sm text-slate-400">Change the password for the current admin account.</p>
+      <form onSubmit={submit} className="mt-6 grid max-w-xl gap-4">
+        {message && <div className="rounded-lg border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-200">{message}</div>}
+        {error && <div className="rounded-lg border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">{error}</div>}
+        {[
+          ["Current Password", "currentPassword"],
+          ["New Password", "newPassword"],
+          ["Confirm New Password", "confirmPassword"]
+        ].map(([label, field]) => (
+          <label className="block" key={field}>
+            <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">{label}</span>
+            <input type="password" value={form[field]} onChange={(event) => setForm({ ...form, [field]: event.target.value })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+          </label>
+        ))}
+        <button disabled={saving} className="inline-flex w-fit items-center gap-2 rounded-lg bg-[#f4c842] px-5 py-3 font-extrabold text-[#061527] disabled:opacity-60">
+          {saving && <Loader2 className="animate-spin" size={16} />}
+          Change Password
+        </button>
+      </form>
+    </section>
+  );
 }
 
 function slugify(value) {
