@@ -1,6 +1,12 @@
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 
-dotenv.config({ path: ".env", override: true });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+dotenv.config({ path: path.resolve(__dirname, "../../.env"), override: true });
+dotenv.config({ path: ".env" });
 
 function normalizeOrigin(url) {
   try {
@@ -14,7 +20,13 @@ const defaultClientUrls = [
   "https://eventmax.in",
   "https://www.eventmax.in",
   "https://admin.eventmax.in",
-  "https://api.eventmax.in"
+  "https://api.eventmax.in",
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:5175",
+  "http://localhost:5185",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5185"
 ];
 
 const clientUrls = (process.env.CLIENT_URL || defaultClientUrls.join(","))
