@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import {
   ArrowRight,
   Award,
@@ -22,8 +22,10 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AIPitchGenerator from "./components/AIPitchGenerator";
 import InquiryDashboard from "./components/InquiryDashboard";
+import FlagshipExperienceCard from "./components/FlagshipExperienceCard";
 import { apiRequest, resolveApiAssetUrl } from "./api";
-import { CITIES, CITY_DETAILS, PROPERTIES, STATS, TIMELINE, WHY_PARTNER } from "./data";
+import { getFlagshipServicesFromCms } from "./services/flagshipServices";
+import { CITIES, CITY_DETAILS, STATS, TIMELINE, WHY_PARTNER } from "./data";
 import heroImage from "./assets/hr-conference-hero.jpg";
 
 const iconMap = {
@@ -34,7 +36,6 @@ const iconMap = {
   visibility: Sparkles,
   public: Globe2
 };
-
 export default function HomePage({ initialSection }) {
   const navigate = useNavigate();
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -45,6 +46,27 @@ export default function HomePage({ initialSection }) {
   const [thankYouInquiry, setThankYouInquiry] = useState(null);
   const [formErr, setFormErr] = useState(null);
   const [inquiryCounter, setInquiryCounter] = useState(0);
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state?.scrollTo === "sponsors") {
+      setTimeout(() => {
+        const section = document.getElementById("sponsors");
+
+        if (section) {
+          section.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+          });
+        }
+
+        // state clear kar do taaki refresh ya dubara render pe fir scroll na ho
+        navigate(location.pathname, {
+          replace: true,
+          state: {},
+        });
+      }, 300);
+    }
+  }, [location, navigate]);
   const [partnerForm, setPartnerForm] = useState({
     name: "",
     company: "",
@@ -66,7 +88,7 @@ export default function HomePage({ initialSection }) {
         { value: "30+", label: "Partner brands" }
       ]
     },
-    properties: PROPERTIES,
+    properties: [],
     upcomingEvents: [],
     cities: CITIES,
     cityDetails: CITY_DETAILS,
@@ -106,7 +128,7 @@ export default function HomePage({ initialSection }) {
 
         setCms((prev) => ({
           roadshow: data.roadshow || prev.roadshow,
-          properties: data.events?.length ? data.events : prev.properties,
+          properties: getFlagshipServicesFromCms(data),
           upcomingEvents: data.upcomingEvents?.filter((event) => event.status !== "Draft") || [],
           cities: cityDetails.length ? cityDetails.map((city) => city.name) : prev.cities,
           cityDetails: cityDetails.length ? cityDetails : prev.cityDetails,
@@ -167,7 +189,7 @@ export default function HomePage({ initialSection }) {
           <div className="hero-orb hero-orb-two" />
           <div className="container hero-grid">
             <div className="hero-copy">
-              <div className="eyebrow"><Sparkles size={15} /> India’s premium people-leadership community</div>
+              <div className="eyebrow"> India’s premium people-leadership community</div>
               <h1>Where the people shaping work <span>meet what’s next.</span></h1>
               <p>
                 Curated conferences for HR leaders, founders, and workplace innovators—built around useful ideas,
@@ -218,27 +240,10 @@ export default function HomePage({ initialSection }) {
               <h2 className="section-title">Find your next room.</h2>
               <p>Purpose-built formats for every level of the people function.</p>
             </div>
-            <button className="btn btn-secondary" onClick={() => navigate("/events")}>View all events <ArrowRight size={16} /></button>
+            <button className="btn btn-secondary" onClick={() => navigate("/services")}>View All Services <ArrowRight size={16} /></button>
           </div>
           <div className="container event-grid">
-            {cms.properties.map((property, index) => (
-              <article
-                className="event-card"
-                key={property.id}
-                onClick={() => navigate(`/events/${encodeURIComponent(property.slug || property.id)}`)}
-              >
-                <div className="event-image">
-                  <img src={property.image} alt={property.title} />
-                  {property.badge && <span className="badge">{property.badge}</span>}
-                  <span className="event-number">0{index + 1}</span>
-                </div>
-                <div className="event-body">
-                  <h3>{property.title}</h3>
-                  <p>{property.subtitle}</p>
-                  <span className="card-link">View event details <ArrowRight size={15} /></span>
-                </div>
-              </article>
-            ))}
+            {cms.properties.map((property, index) => <FlagshipExperienceCard key={property.id} service={property} index={index} onClick={() => navigate(`/services/${encodeURIComponent(property.slug || property.id)}`)} />)}
           </div>
         </section>
         {cms.upcomingEvents.length > 0 && <section className="section section-tint">
@@ -395,7 +400,7 @@ export default function HomePage({ initialSection }) {
             </div>
             <div className="form-card">
               <form onSubmit={handlePartnerSubmit}>
-                <div className="form-heading"><div><small>Partnership desk</small><h3>Start a conversation</h3></div><Sparkles /></div>
+                <div className="form-heading"><div><small>Partnership desk</small><h3>Start a conversation</h3></div></div>
                 {formErr && <div className="form-error">{formErr}</div>}
                 <div className="form-grid">
                   <Field label="Your name" value={partnerForm.name} onChange={(name) => setPartnerForm({ ...partnerForm, name })} placeholder="Full name" required />

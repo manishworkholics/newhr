@@ -17,26 +17,47 @@ function normalizeOrigin(origin) {
   }
 }
 
+function isAllowedOrigin(origin) {
+  if (!origin) {
+    return true;
+  }
+
+  const normalizedOrigin = normalizeOrigin(origin);
+
+  return (
+    env.clientUrls.includes(normalizedOrigin) ||
+    env.localOriginRegex.some((regex) => regex.test(normalizedOrigin)) ||
+    env.trustedOriginRegex.some((regex) => regex.test(normalizedOrigin))
+  );
+}
+
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+
+  if (origin && isAllowedOrigin(origin)) {
+    res.header("Access-Control-Allow-Origin", origin);
+    res.header("Vary", "Origin");
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
+    res.header("Access-Control-Allow-Headers", req.headers["access-control-request-headers"] || "Content-Type,Authorization,Accept");
+  }
+
+  if (req.method === "OPTIONS") {
+    res.sendStatus(204);
+    return;
+  }
+
+  next();
+});
+
 const corsOptions = {
   origin(origin, callback) {
-    if (!origin) {
+    if (isAllowedOrigin(origin)) {
       callback(null, true);
       return;
     }
 
-    const normalizedOrigin = normalizeOrigin(origin);
-
-    if (env.clientUrls.includes(normalizedOrigin)) {
-      callback(null, true);
-      return;
-    }
-
-    if (env.localOriginRegex.some((regex) => regex.test(normalizedOrigin))) {
-      callback(null, true);
-      return;
-    }
-
-    callback(new Error(`CORS blocked for origin: ${origin}`));
+    callback(null, false);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],

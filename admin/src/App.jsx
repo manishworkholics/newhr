@@ -250,6 +250,30 @@ export default function App() {
         }
       }
 
+      if (editor.type === "upcoming-event") {
+        const payload = {
+          slug: form.slug || slugify(form.title),
+          title: form.title,
+          subtitle: form.subtitle,
+          badge: form.badge,
+          image: form.image,
+          details: form.details,
+          status: form.status,
+          sortOrder: Number(form.sortOrder || 0)
+        };
+        if (editor.data?.id) {
+          await apiRequest(`/cms/upcoming-events/${editor.data.id}`, {
+            method: "PUT",
+            body: JSON.stringify(payload)
+          });
+        } else {
+          await apiRequest("/cms/upcoming-events", {
+            method: "POST",
+            body: JSON.stringify(payload)
+          });
+        }
+      }
+
       if (editor.type === "city") {
         const payload = {
           name: form.name || form.cityName,
@@ -309,46 +333,27 @@ export default function App() {
 
       if (editor.type === "gallery") {
         const payload = {
-          title: form.title,
-          caption: form.caption,
-          image: form.image,
+          eventTitle: form.eventTitle,
           eventName: form.eventName,
-          location: form.location,
+          city: form.city,
           year: form.year,
+          shortDescription: form.shortDescription,
           status: form.status || "Published",
-          sortOrder: Number(form.sortOrder || 0)
+          coverImage: form.coverImage || form.image,
+          displayOrder: Number(form.displayOrder ?? form.sortOrder ?? 0),
+          images: Array.isArray(form.images) ? form.images : []
         };
-        if (editor.data?.id) {
-          await apiRequest(`/cms/gallery/${editor.data.id}`, {
-            method: "PUT",
-            body: JSON.stringify(payload)
-          });
-        } else {
-          await apiRequest("/cms/gallery", {
-            method: "POST",
-            body: JSON.stringify(payload)
-          });
+        if (!payload.eventTitle?.trim() || !payload.eventName?.trim() || !payload.city?.trim() || !payload.year?.trim() || !payload.shortDescription?.trim() || !payload.coverImage?.trim()) {
+          window.alert("Event Title, Event Name, City, Year, Short Description, and Cover Image are required.");
+          return;
         }
-      }
-
-      if (editor.type === "upcoming-event") {
-        const payload = {
-          slug: form.slug || slugify(form.title),
-          title: form.title,
-          subtitle: form.subtitle,
-          badge: form.badge,
-          image: form.image,
-          details: form.details,
-          status: form.status,
-          sortOrder: Number(form.sortOrder || 0)
-        };
         if (editor.data?.id) {
-          await apiRequest(`/cms/upcoming-events/${editor.data.id}`, {
+          await apiRequest(`/gallery-events/${editor.data.id}`, {
             method: "PUT",
             body: JSON.stringify(payload)
           });
         } else {
-          await apiRequest("/cms/upcoming-events", {
+          await apiRequest("/gallery-events", {
             method: "POST",
             body: JSON.stringify(payload)
           });
@@ -415,7 +420,7 @@ export default function App() {
     if (type === "upcoming-event") await apiRequest(`/cms/upcoming-events/${id}`, { method: "DELETE" });
     if (type === "city") await apiRequest(`/cms/cities/${id}`, { method: "DELETE" });
     if (type === "journey") await apiRequest(`/admin/journey/${id}`, { method: "DELETE" });
-    if (type === "gallery") await apiRequest(`/cms/gallery/${id}`, { method: "DELETE" });
+    if (type === "gallery") await apiRequest(`/gallery-events/${id}`, { method: "DELETE" });
     if (type === "testimonial") await apiRequest(`/cms/testimonials/${id}`, { method: "DELETE" });
     if (type === "company-logo") await apiRequest(`/admin/company-logos/${id}`, { method: "DELETE" });
     if (type === "inquiry") await apiRequest(`/inquiries/${id}`, { method: "DELETE" });
@@ -889,36 +894,53 @@ function GalleryGrid({ gallery, onEdit, onDelete }) {
       <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f4c842]">Visual CMS</div>
-          <h2 className="mt-2 font-display text-2xl font-extrabold">Gallery Images</h2>
+          <h2 className="mt-2 font-display text-2xl font-extrabold">Gallery Events</h2>
         </div>
         <button onClick={() => onEdit({ type: "gallery" })} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-sm font-extrabold text-[#061527]">
-          <CirclePlus size={16} /> Add Image
+          <CirclePlus size={16} /> Add Gallery Event
         </button>
       </div>
       {gallery.length ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {gallery.map((item) => (
-            <article key={item.id} className="overflow-hidden rounded-lg border border-white/10 bg-white/[0.03]">
-              <div className="relative h-52 bg-black">
-                <img src={item.image} alt={item.title} className="h-full w-full object-cover" />
-                <span className={`absolute right-3 top-3 rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase ${item.status === "Draft" ? "bg-slate-800 text-slate-300" : "bg-emerald-500 text-white"}`}>{item.status || "Published"}</span>
-              </div>
-              <div className="p-4">
-                <h3 className="font-display text-lg font-extrabold">{item.title}</h3>
-                <p className="mt-1 text-xs text-slate-400">{[item.eventName, item.location, item.year].filter(Boolean).join(" · ")}</p>
-                <p className="mt-3 line-clamp-2 min-h-10 text-xs leading-5 text-slate-300">{item.caption || "No caption added."}</p>
-                <div className="mt-4 flex gap-2"><ActionButton onClick={() => onEdit({ type: "gallery", data: item })} /><DeleteButton onClick={() => onDelete(item.id)} /></div>
-              </div>
-            </article>
-          ))}
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[980px] text-left text-sm">
+            <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-slate-400">
+              <tr>
+                {["Cover", "Event Name", "Location", "Year", "Images", "Status", "Display Order", "Actions"].map((column) => <th key={column} className="px-5 py-4">{column}</th>)}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/10">
+              {gallery.map((item) => (
+                <tr key={item.id}>
+                  <td className="px-5 py-4">
+                    <img src={resolveApiAssetUrl(item.coverImage)} alt={item.eventTitle} className="h-16 w-24 rounded-md object-cover" />
+                  </td>
+                  <td className="px-5 py-4">
+                    <div className="font-extrabold text-white">{item.eventTitle}</div>
+                    <div className="mt-1 text-xs text-slate-400">{item.eventName}</div>
+                  </td>
+                  <td className="px-5 py-4">{item.city || "-"}</td>
+                  <td className="px-5 py-4">{item.year || "-"}</td>
+                  <td className="px-5 py-4">{item.images?.length || (item.coverImage ? 1 : 0)}</td>
+                  <td className="px-5 py-4"><span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase ${item.status === "Draft" ? "bg-slate-800 text-slate-300" : "bg-emerald-500 text-white"}`}>{item.status || "Published"}</span></td>
+                  <td className="px-5 py-4">{item.displayOrder ?? item.sortOrder ?? 0}</td>
+                  <td className="px-5 py-4">
+                    <div className="flex gap-2">
+                      <a href="/gallery" target="_blank" rel="noreferrer" className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs font-bold hover:border-[#f4c842]">View</a>
+                      <ActionButton onClick={() => onEdit({ type: "gallery", data: item })} />
+                      <DeleteButton onClick={() => onDelete(item.id)} />
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-white/10 py-16 text-center text-sm text-slate-400">No gallery images yet. Add the first one.</div>
+        <div className="rounded-lg border border-dashed border-white/10 py-16 text-center text-sm text-slate-400">No gallery events yet. Add the first one.</div>
       )}
     </section>
   );
 }
-
 function CompanyLogoGrid({ companyLogos, onEdit, onDelete }) {
   return (
     <section className="rounded-xl border border-white/10 bg-[#0b1f37] p-5">
@@ -980,12 +1002,12 @@ function TestimonialGrid({ testimonials, onEdit, onDelete }) {
                 <MessageSquareQuote className="text-[#f4c842]" size={28} />
                 <span className={`rounded-full px-2.5 py-1 text-[9px] font-extrabold uppercase ${item.status === "Draft" ? "bg-slate-800 text-slate-300" : "bg-emerald-500 text-white"}`}>{item.status}</span>
               </div>
-              <p className="mt-4 line-clamp-5 min-h-24 text-sm leading-6 text-slate-200">“{item.quote}”</p>
+              <p className="mt-4 line-clamp-5 min-h-24 text-sm leading-6 text-slate-200">"{item.quote}"</p>
               <div className="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
                 {item.image && <img src={item.image} alt={item.name} className="h-11 w-11 rounded-full object-cover" />}
                 <div>
                   <h3 className="font-display font-extrabold">{item.name}</h3>
-                  <p className="text-xs text-slate-400">{[item.designation, item.company].filter(Boolean).join(" · ")}</p>
+                  <p className="text-xs text-slate-400">{[item.designation, item.company].filter(Boolean).join(" / ")}</p>
                 </div>
               </div>
               <div className="mt-4 flex gap-2"><ActionButton onClick={() => onEdit({ type: "testimonial", data: item })} /><DeleteButton onClick={() => onDelete(item.id)} /></div>
@@ -1150,7 +1172,7 @@ function EditorDrawer({ editor, onClose, onSave, saving }) {
   const isTestimonial = editor.type === "testimonial";
   const isCompanyLogo = editor.type === "company-logo";
   const isJourney = editor.type === "journey";
-  const editorLabel = isEvent ? "Event" : isUpcomingEvent ? "Upcoming Event" : isGallery ? "Gallery Image" : isTestimonial ? "Testimonial" : isCompanyLogo ? "Company Logo" : isJourney ? "Journey" : "City";
+  const editorLabel = isEvent ? "Event" : isUpcomingEvent ? "Upcoming Event" : isGallery ? "Gallery Event" : isTestimonial ? "Testimonial" : isCompanyLogo ? "Company Logo" : isJourney ? "Journey" : "City";
   return (
     <div className="fixed inset-0 z-[70] bg-black/55">
       <div className="absolute right-0 top-0 flex h-full w-full max-w-xl flex-col border-l border-white/10 bg-[#091b30] shadow-2xl">
@@ -1161,7 +1183,7 @@ function EditorDrawer({ editor, onClose, onSave, saving }) {
         <div className="flex-1 overflow-y-auto p-5">
           <div className="grid gap-4">
             {isEvent || isUpcomingEvent ? <EventFields form={form} setForm={setForm} /> : isGallery ? <GalleryFields form={form} setForm={setForm} /> : isTestimonial ? <TestimonialFields form={form} setForm={setForm} /> : isCompanyLogo ? <CompanyLogoFields form={form} setForm={setForm} /> : isJourney ? <JourneyFields form={form} setForm={setForm} /> : <CityFields form={form} setForm={setForm} />}
-            {isCompanyLogo ? (
+            {isGallery ? null : isCompanyLogo ? (
               <CompanyLogoImageField form={form} setForm={setForm} />
             ) : editor.type === "city" ? (
               <ImageField form={form} setForm={setForm} label="Image URL" uploadLabel="Upload Image" />
@@ -1325,27 +1347,82 @@ function CityFields({ form, setForm }) {
 }
 
 function GalleryFields({ form, setForm }) {
+  const imageItems = Array.isArray(form.images) ? form.images : [];
+  const updateGalleryImage = (index, field, value) => {
+    const next = [...imageItems];
+    next[index] = { ...(next[index] || {}), [field]: value };
+    setForm({ ...form, images: next });
+  };
+
   return (
     <>
-      <Input label="Image Title" value={form.title || ""} onChange={(v) => setForm({ ...form, title: v })} />
-      <Textarea label="Caption" value={form.caption || ""} onChange={(v) => setForm({ ...form, caption: v })} />
-      <Input label="Event Name" value={form.eventName || ""} onChange={(v) => setForm({ ...form, eventName: v })} />
+      <Input label="Event Title *" value={form.eventTitle || ""} onChange={(eventTitle) => setForm({ ...form, eventTitle })} />
+      <Input label="Event Name *" value={form.eventName || ""} onChange={(eventName) => setForm({ ...form, eventName })} />
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Location" value={form.location || ""} onChange={(v) => setForm({ ...form, location: v })} />
-        <Input label="Year" value={form.year || ""} onChange={(v) => setForm({ ...form, year: v })} />
+        <Input label="City *" value={form.city || ""} onChange={(city) => setForm({ ...form, city })} />
+        <Input label="Year *" value={form.year || ""} onChange={(year) => setForm({ ...form, year })} />
       </div>
+      <Textarea label="Short Description *" value={form.shortDescription || ""} onChange={(shortDescription) => setForm({ ...form, shortDescription: shortDescription.slice(0, 200) })} />
       <label className="block">
         <span className="mb-2 block text-xs font-extrabold uppercase tracking-wider text-slate-400">Status</span>
-        <select value={form.status || "Published"} onChange={(e) => setForm({ ...form, status: e.target.value })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]">
+        <select value={form.status || "Published"} onChange={(event) => setForm({ ...form, status: event.target.value })} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]">
           <option value="Published">Published</option>
           <option value="Draft">Draft</option>
         </select>
       </label>
-      <Input label="Sort Order" value={form.sortOrder || ""} onChange={(v) => setForm({ ...form, sortOrder: v })} />
+      <Input label="Display Order" value={form.displayOrder ?? form.sortOrder ?? ""} onChange={(displayOrder) => setForm({ ...form, displayOrder })} />
+      <ImageField form={form} setForm={setForm} fieldName="coverImage" label="Cover Image URL" uploadLabel="Upload Cover Image" />
+      <DynamicPanel
+        title="Gallery Images"
+        onAdd={() => setForm({ ...form, images: [...imageItems, { image: "", caption: "", sortOrder: imageItems.length + 1 }] })}
+      >
+        {imageItems.map((item, index) => (
+          <div key={index} className="rounded-lg border border-white/10 p-3">
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-xs font-extrabold uppercase tracking-wider text-slate-500">Image {index + 1}</span>
+              <button type="button" onClick={() => setForm({ ...form, images: imageItems.filter((_, itemIndex) => itemIndex !== index) })} className="rounded-lg border border-red-400/20 px-3 py-2 text-red-300 hover:bg-red-500/10"><Trash2 size={14} /></button>
+            </div>
+            <GalleryImageUploader item={item} onImage={(image) => updateGalleryImage(index, "image", image)} />
+            <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_120px]">
+              <input placeholder="Caption" value={item.caption || ""} onChange={(event) => updateGalleryImage(index, "caption", event.target.value)} className="rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+              <input placeholder="Sort" value={item.sortOrder ?? ""} onChange={(event) => updateGalleryImage(index, "sortOrder", event.target.value)} className="rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+            </div>
+          </div>
+        ))}
+      </DynamicPanel>
     </>
   );
 }
 
+function GalleryImageUploader({ item, onImage }) {
+  const [uploading, setUploading] = useState(false);
+  const handleFile = async (file) => {
+    if (!file) return;
+    setUploading(true);
+    try {
+      const image = await uploadImage(file);
+      onImage(image);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div className="grid gap-3 sm:grid-cols-[120px_1fr]">
+      <div className="h-24 overflow-hidden rounded-md bg-black/30">
+        {item.image ? <img src={resolveApiAssetUrl(item.image)} alt="" className="h-full w-full object-cover" /> : <div className="flex h-full items-center justify-center text-xs text-slate-500">No image</div>}
+      </div>
+      <div>
+        <input placeholder="Image URL" value={item.image || ""} onChange={(event) => onImage(event.target.value)} className="w-full rounded-lg border border-white/10 bg-[#061527] p-3 text-white outline-none focus:border-[#f4c842]" />
+        <label className="mt-2 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-[#f4c842]/40 p-3 text-xs font-bold text-[#f4c842]">
+          {uploading ? <Loader2 className="animate-spin" size={14} /> : <Upload size={14} />}
+          Upload Image
+          <input type="file" accept="image/*" className="hidden" onChange={(event) => handleFile(event.target.files?.[0])} />
+        </label>
+      </div>
+    </div>
+  );
+}
 function TestimonialFields({ form, setForm }) {
   return (
     <>

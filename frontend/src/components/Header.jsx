@@ -4,24 +4,23 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 const navItems = [
   { id: "home", label: "Home", path: "/" },
-  { id: "about", label: "About Us", path: "/about" },
+  { id: "about", label: "About", path: "/about" },
+  { id: "services", label: "Services", path: "/services" },
   { id: "events", label: "Events", path: "/events" },
   { id: "cities", label: "Cities", path: "/cities" },
-  { id: "portfolio", label: "Our story", path: "/portfolio" },
   { id: "gallery", label: "Gallery", path: "/gallery" },
-  { id: "sponsors", label: "Partners", path: "/partners" }
 ];
 
-const sectionIds = ["about", "events", "destinations", "portfolio", "partners"];
+const sectionIds = ["about", "events", "destinations", "portfolio",];
 const sectionToNav = { destinations: "cities" };
 const pathToNav = [
   { path: "/about", id: "about" },
+  { path: "/services", id: "services" },
   { path: "/events", id: "events" },
   { path: "/cities", id: "cities" },
   { path: "/destinations", id: "cities" },
   { path: "/portfolio", id: "portfolio" },
   { path: "/gallery", id: "gallery" },
-  { path: "/sponsors", id: "partners" }
 ];
 
 export default function Header({ onOpenRegister, onOpenDashboard }) {
@@ -121,7 +120,6 @@ export default function Header({ onOpenRegister, onOpenDashboard }) {
     <header className="site-header">
       <nav className="container nav-shell">
         <button className="brand" onClick={() => go("home")}>
-          <span className="brand-mark"><Sparkles size={18} /></span>
           <span>EventMax</span>
         </button>
         <div className="desktop-nav">
@@ -156,7 +154,7 @@ export default function Header({ onOpenRegister, onOpenDashboard }) {
             </button>
           ))}
           <button onClick={() => { onOpenDashboard(); setMobileMenuOpen(false); }}>Organizer login</button>
-          <button className="btn btn-primary" onClick={() => openRegistration()}>Request invite</button>
+          <button className="btn btn-primary" onClick={() => { onOpenRegister(); setMobileMenuOpen(false); }}>Request invite</button>
         </div>
       )}
     </header>

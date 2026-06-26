@@ -45,12 +45,36 @@ export async function apiRequest(path, options = {}) {
 
 export async function uploadImage(file) {
   const formData = new FormData();
-  formData.append("image", file);
+  formData.append("image", await optimizeImage(file));
   const data = await apiRequest("/uploads/image", {
     method: "POST",
     body: formData
   });
   return data.file.url;
+}
+
+async function optimizeImage(file) {
+  if (!file?.type?.startsWith("image/") || file.type === "image/gif") {
+    return file;
+  }
+
+  const bitmap = await createImageBitmap(file);
+  const maxSize = 1800;
+  const scale = Math.min(1, maxSize / Math.max(bitmap.width, bitmap.height));
+  const width = Math.round(bitmap.width * scale);
+  const height = Math.round(bitmap.height * scale);
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const context = canvas.getContext("2d");
+  context.drawImage(bitmap, 0, 0, width, height);
+
+  const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.82));
+  bitmap.close?.();
+
+  if (!blob) return file;
+  const optimizedName = file.name.replace(/\.[^.]+$/, ".jpg");
+  return new File([blob], optimizedName, { type: "image/jpeg" });
 }
 
 export function resolveApiAssetUrl(url) {

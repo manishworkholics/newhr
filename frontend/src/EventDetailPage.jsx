@@ -30,7 +30,7 @@ export default function EventDetailPage() {
     apiRequest("/cms")
       .then((data) => {
         const allEvents = [...(data.events || []), ...(data.upcomingEvents || [])];
-        if (allEvents.length) setEvents(allEvents);
+        if (allEvents.length) setEvents(allEvents.filter((event) => event.status !== "Draft"));
       })
       .catch(() => {});
   }, [eventId]);
@@ -80,14 +80,14 @@ export default function EventDetailPage() {
         <section className="event-detail-content section">
           <div className="container detail-layout">
             <div className="detail-main">
-              <div className="section-kicker">About this experience</div>
+              <div className="section-kicker">About this event</div>
               <h2 className="section-title">A focused room for meaningful progress.</h2>
               <p className="detail-intro">
                 {event.description || `${event.title} brings together relevant leaders, practitioners, and partners for a carefully curated exchange of ideas, practical learning, and high-value connections.`}
               </p>
 
               <div className="detail-section">
-                <h3>Our Offerings (Services Provided)</h3>
+                <h3>Event Detail</h3>
                 <div className="detail-list">
                   {(event.details || []).map((detail) => (
                     <div key={detail}><CheckCircle2 size={19} /><span>{detail}</span></div>

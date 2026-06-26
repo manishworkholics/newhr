@@ -11,6 +11,7 @@ import communityRoutes from "./community.routes.js";
 import cityRoutes from "./city.routes.js";
 import journeyRoutes from "./journey.routes.js";
 import adminAuthRoutes from "./adminAuth.routes.js";
+import galleryRoutes from "./gallery.routes.js";
 import { requireAdminAuth } from "../middleware/auth.middleware.js";
 
 const router = Router();
@@ -23,6 +24,7 @@ router.use("/cities", cityRoutes);
 router.use("/admin/auth", adminAuthRoutes);
 router.use("/admin/cities", requireAdminAuth, cityRoutes);
 router.use("/", journeyRoutes);
+router.use("/", galleryRoutes);
 router.use("/uploads", requireAdminAuth, uploadRoutes);
 router.use("/passes", requireAdminAuth, passRoutes);
 router.use("/", companyLogoRoutes);

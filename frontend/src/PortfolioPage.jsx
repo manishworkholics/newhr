@@ -44,7 +44,7 @@ export default function PortfolioPage() {
       <main className="portfolio-page">
         <section className="portfolio-page-hero">
           <div className="container portfolio-page-heading">
-            <div className="eyebrow"><Sparkles size={15} /> The TalentMax journey</div>
+            <div className="eyebrow"> The EventMax journey</div>
             <h1>Ideas became rooms.<br /><span>Rooms became a movement.</span></h1>
             <p>Explore the milestones, partnerships, and memorable gatherings that shaped our growing HR community.</p>
           </div>

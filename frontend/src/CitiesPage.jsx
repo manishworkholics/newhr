@@ -40,9 +40,9 @@ export default function CitiesPage() {
       <main className="cities-page">
         <section className="section city-showcase">
           <div className="container city-showcase-heading">
-            <h1 className="section-title">Our {cms.cityDetails.length} Summit Cities &amp;<br />Their Historical Legacies</h1>
+            <h1 className="section-title">Our {cms.cityDetails.length} Summit Cities</h1>
             <p>
-              Every city on the TalentMax Roadshow is a unique tapestry of historic wonders and dynamic corporate
+              Every city on the EventMax Roadshow is a unique tapestry of historic wonders and dynamic corporate
               powerhouses. Select a city to pre-fill your VIP matchmaking credentials.
             </p>
           </div>

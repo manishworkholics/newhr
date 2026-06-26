@@ -14,7 +14,7 @@ export default function AboutHero({ about, onJoin }) {
           transition={{ duration: 0.55 }}
         >
           <div className="inline-flex items-center gap-2 rounded-full border border-[#ddceea] bg-white/70 px-3.5 py-2 text-[11px] font-extrabold uppercase tracking-[.08em] text-[#7049a7]">
-            <Sparkles size={15} /> #EVENTMAX
+            EVENTMAX
           </div>
           <h1 className="mt-6 mb-5 font-display text-[44px] font-extrabold leading-[1.07] tracking-[-.055em] text-[#1e1b4b] sm:text-6xl lg:text-7xl">
             {about.heroTitle || "About EventMax"}

@@ -6,10 +6,9 @@ import Footer from "./components/Footer";
 import AIPitchGenerator from "./components/AIPitchGenerator";
 import InquiryDashboard from "./components/InquiryDashboard";
 import { apiRequest } from "./api";
-import { PROPERTIES } from "./data";
 
 export default function EventsPage() {
-  const [events, setEvents] = useState(PROPERTIES);
+  const [events, setEvents] = useState([]);
   const [query, setQuery] = useState("");
   const [registerOpen, setRegisterOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
@@ -18,7 +17,7 @@ export default function EventsPage() {
     window.scrollTo(0, 0);
     apiRequest("/cms")
       .then((data) => {
-        if (data.events?.length) setEvents(data.events);
+        setEvents((data.upcomingEvents || []).filter((event) => event.status !== "Draft"));
       })
       .catch(() => {});
   }, []);
@@ -39,10 +38,10 @@ export default function EventsPage() {
         <section className="events-page-hero">
           <div className="events-page-orb" />
           <div className="container events-page-heading">
-            <div className="eyebrow"><Sparkles size={15} /> TalentMax experiences</div>
+            <div className="eyebrow"> EventMax experiences</div>
             <h1>Find the room that moves<br /><span>your work forward.</span></h1>
             <p>
-              Explore every TalentMax conference, summit, and networking format—each designed
+              Explore every EventMax conference, summit, and networking format—each designed
               around relevant people, practical ideas, and conversations worth continuing.
             </p>
           </div>

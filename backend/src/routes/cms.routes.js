@@ -2,20 +2,16 @@ import { Router } from "express";
 import {
   createCity,
   createEvent,
-  createGalleryImage,
   deleteCity,
   deleteEvent,
-  deleteGalleryImage,
   getCities,
   getCityBySlug,
   getCms,
   getEvents,
-  getGallery,
   getRoadshow,
   getAboutPage,
   updateCity,
   updateEvent,
-  updateGalleryImage,
   updateRoadshow,
   updateAboutPage,
   createTestimonial,
@@ -52,11 +48,6 @@ router.get("/cities/:slug", getCityBySlug);
 router.post("/cities", requireAdminAuth, createCity);
 router.put("/cities/:id", requireAdminAuth, updateCity);
 router.delete("/cities/:id", requireAdminAuth, deleteCity);
-
-router.get("/gallery", getGallery);
-router.post("/gallery", requireAdminAuth, createGalleryImage);
-router.put("/gallery/:id", requireAdminAuth, updateGalleryImage);
-router.delete("/gallery/:id", requireAdminAuth, deleteGalleryImage);
 
 router.get("/testimonials", getTestimonials);
 router.post("/testimonials", requireAdminAuth, createTestimonial);

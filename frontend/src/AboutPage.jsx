@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { motion } from "motion/react";
 import Header from "./components/Header";
@@ -28,6 +29,7 @@ export default function AboutPage() {
   const [communityOpen, setCommunityOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
   const [registerOpen, setRegisterOpen] = useState(false);
+  const navigate = useNavigate();
   useEffect(() => {
     window.scrollTo(0, 0);
     apiRequest("/v1/about")
@@ -38,6 +40,13 @@ export default function AboutPage() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleContactUs = () => {
+    navigate("/", {
+      state: {
+        scrollTo: "sponsors",
+      },
+    });
+  };
   return (
     <div className="site-shell">
       <Header
@@ -84,7 +93,7 @@ export default function AboutPage() {
                 <h2 className="m-0 max-w-[760px] font-display text-[34px] font-extrabold leading-tight tracking-[-.045em] sm:text-5xl lg:text-[58px]">Let's Build Meaningful Connections Together</h2>
                 <button
                   className="inline-flex min-h-[50px] items-center justify-center gap-2 rounded-[14px] bg-white px-6 text-sm font-bold text-[#7340e5] shadow-[0_14px_30px_rgba(42,25,67,.14)] transition hover:-translate-y-0.5"
-                  onClick={() => setCommunityOpen(true)}
+                  onClick={handleContactUs}
                 >
                   Contact Us <ArrowRight size={16} />
                 </button>
