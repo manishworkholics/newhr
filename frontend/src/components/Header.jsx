@@ -12,7 +12,7 @@ const navItems = [
   { id: "gallery", label: "Gallery", path: "/gallery" },
 ];
 
-const sectionIds = ["about", "events", "destinations", "portfolio",];
+const sectionIds = ["about", "destinations", "portfolio"];
 const sectionToNav = { destinations: "cities" };
 const pathToNav = [
   { path: "/about", id: "about" },
@@ -104,6 +104,11 @@ export default function Header({ onOpenRegister, onOpenDashboard }) {
 
     if (id === "about") {
       navigate("/about");
+      return;
+    }
+
+    if (id === "events") {
+      navigate("/events");
       return;
     }
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Sparkles, Loader2, ShieldAlert, CheckCircle } from "lucide-react";
-import { CITIES, PROPERTIES } from "../data";
+import { CITIES } from "../data";
 import { apiRequest } from "../api";
 
 export default function AIPitchGenerator({ isOpen, onClose, preselectedProperty, preselectedCity }) {
@@ -12,11 +12,12 @@ export default function AIPitchGenerator({ isOpen, onClose, preselectedProperty,
     email: "",
     mobileNumber: "",
     city: preselectedCity || CITIES[0],
-    property: preselectedProperty || PROPERTIES[0].title,
+    property: preselectedProperty || "",
     goal: ""
   });
 
   const [loadingText, setLoadingText] = useState("Securing credentials...");
+  const [eventOptions, setEventOptions] = useState([]);
   const [errorMsg, setErrorMsg] = useState(null);
 
   useEffect(() => {
@@ -30,6 +31,18 @@ export default function AIPitchGenerator({ isOpen, onClose, preselectedProperty,
       setFormData((prev) => ({ ...prev, city: preselectedCity }));
     }
   }, [preselectedCity]);
+
+  useEffect(() => {
+    apiRequest("/cms")
+      .then((data) => {
+        const events = (data.upcomingEvents || []).filter((event) => event.status !== "Draft");
+        setEventOptions(events);
+        if (!preselectedProperty && events[0]?.title) {
+          setFormData((prev) => prev.property ? prev : { ...prev, property: events[0].title });
+        }
+      })
+      .catch(() => setEventOptions([]));
+  }, [preselectedProperty]);
 
   const loadingSequence = [
     "Establishing handshakes with TalentMax Executive Committee...",
@@ -222,13 +235,13 @@ export default function AIPitchGenerator({ isOpen, onClose, preselectedProperty,
                       onChange={(e) => setFormData({ ...formData, property: e.target.value })}
                       className="w-full bg-[#0a192f] border border-white/10 rounded-lg p-3 text-white focus:ring-2 focus:ring-[#e9c349] focus:outline-none"
                     >
-                      {preselectedProperty && !PROPERTIES.some((p) => p.title === preselectedProperty) && (
+                      {preselectedProperty && !eventOptions.some((event) => event.title === preselectedProperty) && (
                         <option value={preselectedProperty}>{preselectedProperty}</option>
                       )}
-                      {PROPERTIES.map((p) => (
-                        <option key={p.id} value={p.title}>{p.title}</option>
+                      {!preselectedProperty && !eventOptions.length && <option value="">No events available</option>}
+                      {eventOptions.map((event) => (
+                        <option key={event.id || event.slug} value={event.title}>{event.title}</option>
                       ))}
-                      <option value="Any / Roadshow Tour">Any / Roadshow Tour</option>
                     </select>
                   </div>
                 </div>

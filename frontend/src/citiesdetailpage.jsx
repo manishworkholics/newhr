@@ -14,6 +14,8 @@ import {
 
 import Header from "./components/Header";
 import Footer from "./components/Footer";
+import JoinCommunityCard from "./components/JoinCommunityCard";
+import CommunityRegistrationModal from "./components/modals/CommunityRegistrationModal";
 import { apiRequest, resolveApiAssetUrl } from "./api";
 
 export default function CityDetailPage() {
@@ -21,6 +23,7 @@ export default function CityDetailPage() {
   const [city, setCity] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [communityOpen, setCommunityOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -271,6 +274,9 @@ export default function CityDetailPage() {
                   </div>
                 ))}
               </div>
+              <div className="mt-6">
+                <JoinCommunityCard onOpen={() => setCommunityOpen(true)} />
+              </div>
 
             </aside>
 
@@ -279,6 +285,7 @@ export default function CityDetailPage() {
 
       </main>
 
+      <CommunityRegistrationModal isOpen={communityOpen} onClose={() => setCommunityOpen(false)} />
       <Footer />
     </div>
   );

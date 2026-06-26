@@ -1185,6 +1185,9 @@ function InquiryTable({ rows, onStatusChange, onDelete }) {
 }
 
 function PassTable({ rows, onDelete }) {
+  const [eventFilter, setEventFilter] = useState("All");
+  const eventOptions = [...new Set(rows.map((row) => row.property).filter(Boolean))].sort();
+  const visibleRows = eventFilter === "All" ? rows : rows.filter((row) => row.property === eventFilter);
   const columns = [
     ["Name", "name"], ["Email", "email"], ["Mobile", "mobileNumber"], ["Company", "company"],
     ["Designation", "designation"], ["City", "city"], ["Event", "property"], ["Badge Code", "vipBadgeCode"],
@@ -1193,7 +1196,7 @@ function PassTable({ rows, onDelete }) {
   const exportExcel = () => {
     const escapeXml = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
     const header = columns.map(([label]) => `<Cell><Data ss:Type="String">${escapeXml(label)}</Data></Cell>`).join("");
-    const body = rows.map((row) => {
+    const body = visibleRows.map((row) => {
       const exportRow = { ...row, submitted: new Date(row.createdAt).toLocaleString() };
       return `<Row>${columns.map(([, key]) => `<Cell><Data ss:Type="String">${escapeXml(exportRow[key])}</Data></Cell>`).join("")}</Row>`;
     }).join("");
@@ -1206,7 +1209,7 @@ function PassTable({ rows, onDelete }) {
     URL.revokeObjectURL(url);
   };
 
-  return <DataTable title="Event Registrations" rows={rows} columns={columns.map(([, key]) => key)} onDelete={onDelete} action={<button onClick={exportExcel} disabled={!rows.length} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-xs font-extrabold text-[#061527] disabled:opacity-50"><Download size={15} /> Export Excel</button>} />;
+  return <DataTable title="Event Registrations" rows={visibleRows} columns={columns.map(([, key]) => key)} onDelete={onDelete} action={<div className="flex items-center gap-3"><select value={eventFilter} onChange={(event) => setEventFilter(event.target.value)} className="max-w-48 rounded-lg border border-white/10 bg-[#061527] px-3 py-2 text-xs text-white outline-none focus:border-[#f4c842]"><option value="All">All Events</option>{eventOptions.map((event) => <option key={event} value={event}>{event}</option>)}</select><button onClick={exportExcel} disabled={!visibleRows.length} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-xs font-extrabold text-[#061527] disabled:opacity-50"><Download size={15} /> Export Excel</button></div>} />;
 }
 
 function CommunityRegistrationTable({ rows, onStatusChange, onDelete }) {

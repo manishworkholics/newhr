@@ -16,6 +16,8 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import AIPitchGenerator from "./components/AIPitchGenerator";
 import InquiryDashboard from "./components/InquiryDashboard";
+import JoinCommunityCard from "./components/JoinCommunityCard";
+import CommunityRegistrationModal from "./components/modals/CommunityRegistrationModal";
 import { apiRequest } from "./api";
 import { PROPERTIES } from "./data";
 
@@ -24,6 +26,7 @@ export default function EventDetailPage() {
   const [events, setEvents] = useState(PROPERTIES);
   const [registerOpen, setRegisterOpen] = useState(false);
   const [dashboardOpen, setDashboardOpen] = useState(false);
+  const [communityOpen, setCommunityOpen] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -130,6 +133,9 @@ export default function EventDetailPage() {
                 <div><MapPin /><span><small>Location</small><strong>Multiple Indian cities</strong></span></div>
                 <div><Users /><span><small>Audience</small><strong>HR & business leaders</strong></span></div>
               </div>
+              <div className="mt-6">
+                <JoinCommunityCard onOpen={() => setCommunityOpen(true)} />
+              </div>
             </aside>
           </div>
         </section>
@@ -142,6 +148,7 @@ export default function EventDetailPage() {
         preselectedProperty={event.title}
         preselectedCity=""
       />
+      <CommunityRegistrationModal isOpen={communityOpen} onClose={() => setCommunityOpen(false)} />
       <InquiryDashboard isOpen={dashboardOpen} onClose={() => setDashboardOpen(false)} onInquirySubmittedCounter={0} />
     </div>
   );
