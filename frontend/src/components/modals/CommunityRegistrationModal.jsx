@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Loader2, Users, X } from "lucide-react";
+import { CheckCircle, Loader2, Users, X } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { apiRequest } from "../../api";
 
@@ -55,11 +55,15 @@ export default function CommunityRegistrationModal({ isOpen, onClose }) {
   const [form, setForm] = useState(emptyForm);
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
-  const [toast, setToast] = useState("");
+  const [submittedRegistration, setSubmittedRegistration] = useState(null);
 
   const hasErrors = useMemo(() => Object.keys(errors).length > 0, [errors]);
 
   useEffect(() => {
+    if (!isOpen) {
+      setSubmittedRegistration(null);
+      setErrors({});
+    }
     if (!isOpen) return undefined;
     const onKeyDown = (event) => {
       if (event.key === "Escape") onClose();
@@ -84,16 +88,13 @@ export default function CommunityRegistrationModal({ isOpen, onClose }) {
 
     setSubmitting(true);
     try {
-      const data = await apiRequest("/v1/community/register", {
+      const submitted = { name: form.name, email: form.email };
+      await apiRequest("/v1/community/register", {
         method: "POST",
         body: JSON.stringify(form)
       });
-      setToast(data.message || "Registration submitted successfully");
+      setSubmittedRegistration(submitted);
       setForm(emptyForm);
-      window.setTimeout(() => {
-        setToast("");
-        onClose();
-      }, 1300);
     } catch (error) {
       setErrors({ submit: error.message || "Registration failed. Please try again." });
     } finally {
@@ -140,17 +141,19 @@ export default function CommunityRegistrationModal({ isOpen, onClose }) {
               </button>
             </div>
 
-            {toast && (
-              <div className="mb-5 rounded-xl border border-green-500/20 bg-green-500/10 px-4 py-3 text-sm text-green-300">
-                {toast}
-              </div>
-            )}
-            {errors.submit && (
+            {errors.submit && !submittedRegistration && (
               <div className="mb-5 rounded-xl border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-300">
                 {errors.submit}
               </div>
             )}
-            <form onSubmit={submit} className="p-6 md:p-8">
+            {submittedRegistration ? (
+              <div className="px-6 py-16 text-center md:px-8">
+                <div className="mx-auto mb-6 grid h-16 w-16 place-items-center rounded-full border border-[#e9c349]/35 bg-[#e9c349]/10 text-[#e9c349]"><CheckCircle size={34} /></div>
+                <h4 className="font-display text-3xl font-extrabold text-white">Thank you, {submittedRegistration.name}.</h4>
+                <p className="mx-auto mt-4 max-w-md text-sm leading-7 text-[#c5c6cd]">Your community registration has been received successfully. We’ll contact you shortly at <strong className="font-semibold text-white">{submittedRegistration.email}</strong>.</p>
+                <button type="button" onClick={onClose} className="mt-8 rounded-lg bg-[#e9c349] px-6 py-3 text-sm font-bold text-[#0A192F] transition hover:brightness-110">Done</button>
+              </div>
+            ) : <form onSubmit={submit} className="p-6 md:p-8">
               <div className="grid gap-5 md:grid-cols-2">
                 <Field required label="Full Name" name="name" value={form.name} onChange={updateField} error={errors.name} />
                 <Field required label="Contact Number" name="contactNumber" value={form.contactNumber} onChange={updateField} error={errors.contactNumber} type="tel" />
@@ -186,7 +189,7 @@ export default function CommunityRegistrationModal({ isOpen, onClose }) {
               </div>
 
               {hasErrors && <div className="mt-4 text-xs font-semibold text-red-500">Please fix the highlighted fields before submitting.</div>}
-            </form>
+            </form>}
           </motion.div>
         </motion.div>
       )}

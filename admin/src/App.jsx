@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   BookOpen,
   CalendarDays,
@@ -39,6 +39,7 @@ import {
 import "ckeditor5/ckeditor5.css";
 import { apiRequest, clearAdminToken, getAdminToken, resolveApiAssetUrl, setAdminToken, uploadImage } from "./api";
 import AboutAdmin from "./AboutAdmin";
+import defaultAdminAvatar from "./assets/default-admin-avatar.png";
 
 const navItems = [
   { id: "overview", label: "Overview", icon: LayoutDashboard },
@@ -52,7 +53,8 @@ const navItems = [
   { id: "testimonials", label: "Testimonials", icon: MessageSquareQuote },
   { id: "company-logos", label: "Company Logos", icon: Image },
   { id: "inquiries", label: "Form Inquiries", icon: ClipboardList },
-  { id: "passes", label: "VIP Passes", icon: Ticket },
+  { id: "community-registrations", label: "Community Registrations", icon: ClipboardList },
+  { id: "passes", label: "Event Registration", icon: Ticket },
   { id: "settings", label: "Settings", icon: Settings }
 ];
 
@@ -109,6 +111,7 @@ export default function App() {
   const [companyLogos, setCompanyLogos] = useState([]);
   const [journey, setJourney] = useState([]);
   const [inquiries, setInquiries] = useState([]);
+  const [communityRegistrations, setCommunityRegistrations] = useState([]);
   const [passes, setPasses] = useState([]);
 
   const activeLabel = useMemo(
@@ -165,9 +168,10 @@ export default function App() {
   const loadAll = async () => {
     setLoading(true);
     try {
-      const [cms, inquiryData, passData, companyLogoData, aboutData, journeyData] = await Promise.all([
+      const [cms, inquiryData, communityData, passData, companyLogoData, aboutData, journeyData] = await Promise.all([
         apiRequest("/cms"),
         apiRequest("/inquiries"),
+        apiRequest("/v1/community?limit=100"),
         apiRequest("/passes"),
         apiRequest("/admin/company-logos"),
         apiRequest("/v1/about"),
@@ -183,6 +187,7 @@ export default function App() {
       setCompanyLogos(companyLogoData.companyLogos || []);
       setJourney(journeyData.journey || []);
       setInquiries(inquiryData.inquiries || []);
+      setCommunityRegistrations(communityData.registrations || []);
       setPasses(passData.passes || []);
     } finally {
       setLoading(false);
@@ -424,6 +429,7 @@ export default function App() {
     if (type === "testimonial") await apiRequest(`/cms/testimonials/${id}`, { method: "DELETE" });
     if (type === "company-logo") await apiRequest(`/admin/company-logos/${id}`, { method: "DELETE" });
     if (type === "inquiry") await apiRequest(`/inquiries/${id}`, { method: "DELETE" });
+    if (type === "community-registration") await apiRequest(`/v1/community/${id}`, { method: "DELETE" });
     if (type === "pass") await apiRequest(`/passes/${id}`, { method: "DELETE" });
     await loadAll();
   };
@@ -434,6 +440,14 @@ export default function App() {
       body: JSON.stringify({ status })
     });
     setInquiries((current) => current.map((item) => item.id === id ? data.inquiry : item));
+  };
+
+  const updateCommunityStatus = async (id, status) => {
+    const data = await apiRequest(`/v1/community/${id}/status`, {
+      method: "PUT",
+      body: JSON.stringify({ status })
+    });
+    setCommunityRegistrations((current) => current.map((item) => item.id === id ? data.registration : item));
   };
 
   if (!authChecked) {
@@ -506,6 +520,13 @@ export default function App() {
                   rows={filterRows(inquiries, query)}
                   onStatusChange={updateInquiryStatus}
                   onDelete={(id) => deleteRecord("inquiry", id)}
+                />
+              )}
+              {active === "community-registrations" && (
+                <CommunityRegistrationTable
+                  rows={filterRows(communityRegistrations, query)}
+                  onStatusChange={updateCommunityStatus}
+                  onDelete={(id) => deleteRecord("community-registration", id)}
                 />
               )}
               {active === "passes" && (
@@ -609,6 +630,19 @@ function LoginPage({ onLogin }) {
 }
 
 function Topbar({ title, query, setQuery, onMenu, adminUser, onLogout }) {
+  const [profileOpen, setProfileOpen] = useState(false);
+  const profileRef = useRef(null);
+  const adminName = adminUser?.name || "Admin Name";
+  const adminEmail = adminUser?.email || "admin@example.com";
+
+  useEffect(() => {
+    const closeOnOutsideClick = (event) => {
+      if (!profileRef.current?.contains(event.target)) setProfileOpen(false);
+    };
+    document.addEventListener("mousedown", closeOnOutsideClick);
+    return () => document.removeEventListener("mousedown", closeOnOutsideClick);
+  }, []);
+
   return (
     <header className="sticky top-0 z-30 border-b border-white/10 bg-[#061527]/90 backdrop-blur">
       <div className="flex items-center gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -621,11 +655,25 @@ function Topbar({ title, query, setQuery, onMenu, adminUser, onLogout }) {
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={17} />
           <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search records..." className="w-full rounded-lg border border-white/10 bg-[#0b1f37] py-2.5 pl-10 pr-3 text-sm text-white outline-none focus:border-[#f4c842]" />
         </div>
-        <div className="hidden text-right text-xs text-slate-400 sm:block">
-          <div className="font-bold text-white">{adminUser?.name}</div>
-          <div>{adminUser?.email}</div>
+        <div className="relative" ref={profileRef}>
+          <button
+            type="button"
+            aria-label="Open admin menu"
+            aria-expanded={profileOpen}
+            onClick={() => setProfileOpen((open) => !open)}
+            className="h-10 w-10 cursor-pointer overflow-hidden rounded-full border border-white/15 shadow-lg shadow-purple-950/30 transition hover:scale-105 focus:outline-none focus:ring-2 focus:ring-violet-400/70"
+          >
+            <img src={adminUser?.image || defaultAdminAvatar} alt={adminName} className="h-full w-full object-cover" />
+          </button>
+          <div className={`absolute right-0 top-[calc(100%+12px)] w-64 origin-top-right rounded-2xl border border-white/10 bg-[#10233D] p-4 shadow-2xl transition duration-200 ease-out ${profileOpen ? "scale-100 opacity-100" : "pointer-events-none scale-95 opacity-0"}`}>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-extrabold text-white">{adminName}</p>
+              <a href={`mailto:${adminEmail}`} className="mt-1 block truncate text-xs text-slate-400 transition hover:text-violet-300">{adminEmail}</a>
+            </div>
+            <div className="my-4 border-t border-white/10" />
+            <button onClick={onLogout} className="w-full rounded-xl px-3 py-2 text-left text-sm font-extrabold text-slate-100 transition hover:bg-white/5 hover:text-white">Logout</button>
+          </div>
         </div>
-        <button onClick={onLogout} className="rounded-lg border border-white/10 px-3 py-2 text-xs font-extrabold text-slate-200 hover:border-[#f4c842] hover:text-[#f4c842]">Logout</button>
       </div>
     </header>
   );
@@ -1137,14 +1185,97 @@ function InquiryTable({ rows, onStatusChange, onDelete }) {
 }
 
 function PassTable({ rows, onDelete }) {
-  return <DataTable title="VIP Pass Requests" rows={rows} columns={["name", "email", "mobileNumber", "company", "designation", "city", "property", "vipBadgeCode", "status"]} onDelete={onDelete} />;
+  const columns = [
+    ["Name", "name"], ["Email", "email"], ["Mobile", "mobileNumber"], ["Company", "company"],
+    ["Designation", "designation"], ["City", "city"], ["Event", "property"], ["Badge Code", "vipBadgeCode"],
+    ["Status", "status"], ["Submitted", "submitted"]
+  ];
+  const exportExcel = () => {
+    const escapeXml = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+    const header = columns.map(([label]) => `<Cell><Data ss:Type="String">${escapeXml(label)}</Data></Cell>`).join("");
+    const body = rows.map((row) => {
+      const exportRow = { ...row, submitted: new Date(row.createdAt).toLocaleString() };
+      return `<Row>${columns.map(([, key]) => `<Cell><Data ss:Type="String">${escapeXml(exportRow[key])}</Data></Cell>`).join("")}</Row>`;
+    }).join("");
+    const workbook = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Event Registrations"><Table><Row>${header}</Row>${body}</Table></Worksheet></Workbook>`;
+    const url = URL.createObjectURL(new Blob([workbook], { type: "application/vnd.ms-excel" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `event-registrations-${new Date().toISOString().slice(0, 10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  return <DataTable title="Event Registrations" rows={rows} columns={columns.map(([, key]) => key)} onDelete={onDelete} action={<button onClick={exportExcel} disabled={!rows.length} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-xs font-extrabold text-[#061527] disabled:opacity-50"><Download size={15} /> Export Excel</button>} />;
 }
 
-function DataTable({ title, rows, columns, onDelete }) {
+function CommunityRegistrationTable({ rows, onStatusChange, onDelete }) {
+  const exportExcel = () => {
+    const escapeXml = (value) => String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+    const columns = [
+      ["Name", "name"], ["Contact Number", "contactNumber"], ["Email", "email"],
+      ["City", "city"], ["Profession", "profession"], ["Company", "companyName"],
+      ["Submitted", "submitted"], ["Status", "status"]
+    ];
+    const header = columns.map(([label]) => `<Cell><Data ss:Type="String">${escapeXml(label)}</Data></Cell>`).join("");
+    const body = rows.map((row) => {
+      const exportRow = { ...row, submitted: new Date(row.createdAt).toLocaleString() };
+      return `<Row>${columns.map(([, key]) => `<Cell><Data ss:Type="String">${escapeXml(exportRow[key])}</Data></Cell>`).join("")}</Row>`;
+    }).join("");
+    const workbook = `<?xml version="1.0"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"><Worksheet ss:Name="Community Registrations"><Table><Row>${header}</Row>${body}</Table></Worksheet></Workbook>`;
+    const url = URL.createObjectURL(new Blob([workbook], { type: "application/vnd.ms-excel" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `community-registrations-${new Date().toISOString().slice(0, 10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <section className="rounded-xl border border-white/10 bg-[#0b1f37]">
-      <div className="border-b border-white/10 p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 p-5">
+        <div>
+          <div className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#f4c842]">EventMax Community</div>
+          <h2 className="mt-2 font-display text-2xl font-extrabold">Community Registrations</h2>
+        </div>
+        <div className="flex items-center gap-3">
+          <button onClick={exportExcel} disabled={!rows.length} className="inline-flex items-center gap-2 rounded-lg bg-[#f4c842] px-4 py-2 text-xs font-extrabold text-[#061527] disabled:opacity-50"><Download size={15} /> Export Excel</button>
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-xs font-bold text-slate-300">{rows.length} records</span>
+        </div>
+      </div>
+      {rows.length ? <div className="overflow-x-auto">
+        <table className="w-full min-w-[1120px] text-left text-sm">
+          <thead className="bg-white/[0.03] text-xs uppercase tracking-wider text-slate-400"><tr>
+            {['Name', 'Contact', 'Email', 'City', 'Profession / Company', 'Submitted', 'Status', 'Action'].map((label) => <th key={label} className="px-5 py-4">{label}</th>)}
+          </tr></thead>
+          <tbody className="divide-y divide-white/10">
+            {rows.map((row) => <tr key={row.id} className="align-top hover:bg-white/[0.02]">
+              <td className="px-5 py-4 font-display font-extrabold text-white">{row.name}</td>
+              <td className="px-5 py-4"><a href={`tel:${row.contactNumber}`} className="text-slate-300">{row.contactNumber}</a></td>
+              <td className="px-5 py-4"><a href={`mailto:${row.email}`} className="font-semibold text-[#f4c842]">{row.email}</a></td>
+              <td className="px-5 py-4 text-slate-300">{row.city}</td>
+              <td className="px-5 py-4 text-xs text-slate-300"><strong className="block text-white">{row.profession}</strong><span className="mt-1 block text-slate-400">{row.companyName || "—"}</span></td>
+              <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">{new Date(row.createdAt).toLocaleString()}</td>
+              <td className="px-5 py-4"><select value={row.status} onChange={(event) => onStatusChange(row.id, event.target.value)} className="rounded-lg border border-white/10 bg-[#061527] px-3 py-2 text-xs text-white outline-none focus:border-[#f4c842]"><option value="new">New</option><option value="contacted">Contacted</option></select></td>
+              <td className="px-5 py-4"><DeleteButton onClick={() => onDelete(row.id)} /></td>
+            </tr>)}
+          </tbody>
+        </table>
+      </div> : <div className="py-20 text-center text-sm text-slate-400">No community registrations found.</div>}
+    </section>
+  );
+}
+
+function DataTable({ title, rows, columns, onDelete, action }) {
+  return (
+    <section className="rounded-xl border border-white/10 bg-[#0b1f37]">
+      <div className="flex items-center justify-between gap-3 border-b border-white/10 p-5">
         <h2 className="font-display text-2xl font-extrabold">{title}</h2>
+        {action}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[900px] text-left text-sm">

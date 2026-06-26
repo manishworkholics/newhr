@@ -192,7 +192,7 @@ export default function HomePage({ initialSection }) {
               <div className="eyebrow"> India’s premium people-leadership community</div>
               <h1>Where the people shaping work <span>meet what’s next.</span></h1>
               <p>
-                Curated conferences for HR leaders, founders, and workplace innovators—built around useful ideas,
+                Curated conferences for Business leaders, founders, and workplace innovators—built around useful ideas,
                 honest conversations, and connections that keep working after the room clears.
               </p>
               <div className="hero-actions">
